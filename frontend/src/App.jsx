@@ -1,6 +1,7 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { VaultProvider } from './context/VaultContext';
 
@@ -15,6 +16,7 @@ import Settings from './pages/Settings';
 // Components
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+import ThreeBackground from './components/ThreeBackground';
 
 const ProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
@@ -23,17 +25,67 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+const PageWrapper = ({ children }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    transition={{ duration: 0.4, ease: "easeOut" }}
+  >
+    {children}
+  </motion.div>
+);
+
 const MainLayout = ({ children }) => {
   return (
     <div className="flex">
       <Sidebar />
-      <div style={{ flex: 1, marginLeft: '260px', minHeight: '100vh' }}>
+      <div style={{ flex: 1, marginLeft: '260px', minHeight: '100vh', position: 'relative' }}>
         <Navbar />
-        <main className="container animate-fade-in">
+        <main className="container">
           {children}
         </main>
       </div>
     </div>
+  );
+};
+
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route path="/login" element={<PageWrapper><Login /></PageWrapper>} />
+        <Route path="/register" element={<PageWrapper><Register /></PageWrapper>} />
+        
+        <Route path="/" element={
+          <ProtectedRoute>
+            <MainLayout><PageWrapper><Dashboard /></PageWrapper></MainLayout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/vault" element={
+          <ProtectedRoute>
+            <MainLayout><PageWrapper><Vault /></PageWrapper></MainLayout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/generator" element={
+          <ProtectedRoute>
+            <MainLayout><PageWrapper><Generator /></PageWrapper></MainLayout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/settings" element={
+          <ProtectedRoute>
+            <MainLayout><PageWrapper><Settings /></PageWrapper></MainLayout>
+          </ProtectedRoute>
+        } />
+        
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </AnimatePresence>
   );
 };
 
@@ -42,43 +94,9 @@ function App() {
     <AuthProvider>
       <VaultProvider>
         <Router>
-          <Toaster position="top-right" toastOptions={{
-            style: {
-              background: '#1e293b',
-              color: '#f8fafc',
-              border: '1px solid rgba(255,255,255,0.1)',
-            }
-          }} />
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
-            <Route path="/" element={
-              <ProtectedRoute>
-                <MainLayout><Dashboard /></MainLayout>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/vault" element={
-              <ProtectedRoute>
-                <MainLayout><Vault /></MainLayout>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/generator" element={
-              <ProtectedRoute>
-                <MainLayout><Generator /></MainLayout>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <MainLayout><Settings /></MainLayout>
-              </ProtectedRoute>
-            } />
-            
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
+          <ThreeBackground />
+          <Toaster position="top-right" />
+          <AnimatedRoutes />
         </Router>
       </VaultProvider>
     </AuthProvider>
