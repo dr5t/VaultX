@@ -41,10 +41,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       data.credentials.forEach(cred => {
         const div = document.createElement('div');
         div.className = 'cred-card';
-        div.innerHTML = `
-          <div class="cred-name">${cred.siteName}</div>
-          <div class="cred-user">${cred.username}</div>
-        `;
+
+        const name = document.createElement('div');
+        name.className = 'cred-name';
+        name.textContent = cred.siteName;
+
+        const username = document.createElement('div');
+        username.className = 'cred-user';
+        username.textContent = cred.username;
+
+        div.append(name, username);
         div.addEventListener('click', () => {
           autofill(cred.username, cred.password);
         });
