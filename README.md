@@ -12,7 +12,7 @@ A full-stack, secure password manager with a React dashboard and Chrome Extensio
 
 ## 🛠️ Setup Instructions
 
-### 1. Backend API (Node.js & Express)
+### 1. Backend API (Node.js & Firebase)
 1. Navigate to the backend directory:
    ```bash
    cd backend
@@ -21,11 +21,15 @@ A full-stack, secure password manager with a React dashboard and Chrome Extensio
    ```bash
    npm install
    ```
-3. Setup your environment variables:
+3. Setup Firebase:
+   - Go to Firebase Console > Project Settings > Service Accounts.
+   - Click "Generate new private key" and download the JSON.
+   - Rename it to `firebase-config.json` and place it in the `backend/` folder.
+4. Setup your environment variables:
    ```bash
    cp .env.example .env
    ```
-   *Edit `.env` and provide your MongoDB connection string and JWT secrets.*
+   *Edit `.env` and provide your JWT secrets.*
 4. Start the development server:
    ```bash
    npm run dev
