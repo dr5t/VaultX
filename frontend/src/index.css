@@ -56,8 +56,8 @@ h1, h2, h3, h4 {
 
 .glass-card {
   background: var(--bg-card);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--glass-border);
   border-radius: 16px;
   box-shadow: var(--shadow);
