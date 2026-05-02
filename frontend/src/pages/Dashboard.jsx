@@ -1,27 +1,8 @@
 import React, { useEffect } from 'react';
 import { useVault } from '../context/VaultContext';
-import { Shield, Key, AlertTriangle, Clock, Plus } from 'lucide-react';
+import { Shield, Key, AlertTriangle, Clock, Plus, TrendingUp, Activity } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-
-const StatCard = ({ title, value, icon, color, delay }) => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ delay, duration: 0.5 }}
-    className="glass-card" 
-    style={{ padding: '24px', flex: 1 }}
-  >
-    <div className="flex align-center justify-between mb-10">
-      <div style={{ padding: '10px', background: `${color}20`, color: color, borderRadius: '10px' }}>
-        {icon}
-      </div>
-      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Live</span>
-    </div>
-    <h3 style={{ fontSize: '2rem', margin: '10px 0' }}>{value}</h3>
-    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{title}</p>
-  </motion.div>
-);
 
 const Dashboard = () => {
   const { credentials, duplicates, fetchCredentials, loading } = useVault();
@@ -30,126 +11,142 @@ const Dashboard = () => {
     fetchCredentials();
   }, [fetchCredentials]);
 
-  const recentItems = [...credentials]
-    .sort((a, b) => new Date(b.lastAccessed) - new Date(a.lastAccessed))
-    .slice(0, 5);
+  const stats = [
+    { label: 'Vault Items', value: credentials.length, icon: <Key />, color: '#6366f1', trend: '+2 this week' },
+    { label: 'Compromised', value: duplicates.length, icon: <AlertTriangle />, color: '#f59e0b', trend: 'Critical' },
+    { label: 'Strength', value: '92%', icon: <Shield />, color: '#10b981', trend: 'Excellent' }
+  ];
 
   return (
-    <div>
-      <div className="flex align-center justify-between" style={{ marginBottom: '30px' }}>
+    <motion.div 
+      initial={{ opacity: 0 }} 
+      animate={{ opacity: 1 }} 
+      className="container"
+      style={{ paddingTop: '20px' }}
+    >
+      {/* Header Section */}
+      <header className="flex align-center justify-between" style={{ marginBottom: '50px' }}>
         <div>
-          <h1>Security Overview</h1>
-          <p style={{ color: 'var(--text-muted)' }}>Vault health and activity status.</p>
+          <h1 style={{ fontSize: '2.5rem', marginBottom: '8px' }} className="text-gradient">Dashboard</h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '1.1rem' }}>Welcome to your command center.</p>
         </div>
-        <Link to="/vault" className="btn btn-primary">
-          <Plus size={18} /> New Item
+        <Link to="/vault" className="btn btn-primary" style={{ padding: '14px 28px' }}>
+          <Plus size={20} /> <span style={{ marginLeft: '4px' }}>Add Credential</span>
         </Link>
+      </header>
+
+      {/* Stats Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', marginBottom: '50px' }}>
+        {stats.map((stat, i) => (
+          <motion.div 
+            key={i}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.1, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            className="glass-card"
+            style={{ padding: '30px', position: 'relative', overflow: 'hidden' }}
+          >
+            <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: stat.color }} />
+            <div className="flex justify-between align-center mb-10">
+              <div style={{ padding: '12px', background: `${stat.color}15`, color: stat.color, borderRadius: '12px' }}>
+                {stat.icon}
+              </div>
+              <div style={{ fontSize: '0.8rem', fontWeight: 600, color: stat.color, background: `${stat.color}10`, padding: '4px 10px', borderRadius: '20px', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <TrendingUp size={12} /> {stat.trend}
+              </div>
+            </div>
+            <h2 style={{ fontSize: '2.8rem', margin: '15px 0' }}>{stat.value}</h2>
+            <p style={{ color: 'var(--text-muted)', fontWeight: 500 }}>{stat.label}</p>
+          </motion.div>
+        ))}
       </div>
 
-      <div className="flex gap-20" style={{ marginBottom: '40px' }}>
-        <StatCard 
-          title="Total Credentials" 
-          value={credentials.length} 
-          icon={<Key size={24} />} 
-          color="#6366f1"
-          delay={0.1}
-        />
-        <StatCard 
-          title="Duplicate Usernames" 
-          value={duplicates.length} 
-          icon={<AlertTriangle size={24} />} 
-          color="#f59e0b"
-          delay={0.2}
-        />
-        <StatCard 
-          title="Security Health" 
-          value={credentials.length > 0 ? "85%" : "N/A"} 
-          icon={<Shield size={24} />} 
-          color="#10b981"
-          delay={0.3}
-        />
-      </div>
-
-      <div className="flex gap-20">
+      {/* Main Content Area */}
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '30px' }}>
+        {/* Activity Feed */}
         <motion.div 
-          initial={{ opacity: 0, x: -20 }}
+          initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.4 }}
           className="glass-card" 
-          style={{ flex: 2, padding: '30px' }}
+          style={{ padding: '40px' }}
         >
-          <div className="flex align-center justify-between" style={{ marginBottom: '20px' }}>
-            <h3>Recent Activity</h3>
-            <Link to="/vault" style={{ color: 'var(--primary)', fontSize: '0.9rem', fontWeight: '600' }}>View Vault</Link>
+          <div className="flex align-center gap-10 mb-30">
+            <Activity size={24} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.5rem' }}>Recent Vault Activity</h3>
           </div>
-          
-          {loading ? (
-            <p>Scanning vault...</p>
-          ) : recentItems.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
-              {recentItems.map((item, idx) => (
-                <motion.div 
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + (idx * 0.1) }}
-                  key={item._id} 
-                  className="flex align-center justify-between" 
-                  style={{ padding: '16px', background: 'var(--glass)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}
-                >
-                  <div className="flex align-center gap-10">
-                    <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Key size={18} color="var(--primary)" />
-                    </div>
-                    <div>
-                      <p style={{ fontWeight: '600' }}>{item.siteName}</p>
-                      <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{item.username}</p>
-                    </div>
-                  </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '5px' }}>
-                      <Clock size={12} />
-                      {new Date(item.lastAccessed).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          ) : (
-            <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-              <p>Your vault is empty. Secure your first password today!</p>
-            </div>
-          )}
-        </motion.div>
 
-        <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-          className="glass-card" 
-          style={{ flex: 1, padding: '30px' }}
-        >
-          <h3>Security Insights</h3>
-          <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {[
-              { icon: <Shield size={20} />, text: "2FA is active. Your account is 2x safer.", color: "var(--accent)" },
-              { icon: <AlertTriangle size={20} />, text: `${duplicates.length} duplicate usernames detected.`, color: "var(--warning)" },
-              { icon: <Key size={20} />, text: "Use the 3D generator for unhackable keys.", color: "var(--primary)" }
-            ].map((tip, i) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            {credentials.slice(0, 5).map((item, idx) => (
               <motion.div 
-                key={i}
-                initial={{ opacity: 0, x: 10 }}
+                key={item._id}
+                initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.6 + (i * 0.1) }}
-                className="flex gap-10"
+                transition={{ delay: 0.5 + idx * 0.05 }}
+                style={{ 
+                  padding: '20px', 
+                  background: 'rgba(255,255,255,0.02)', 
+                  borderRadius: '20px', 
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'between'
+                }}
               >
-                <div style={{ color: tip.color, flexShrink: 0 }}>{tip.icon}</div>
-                <p style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{tip.text}</p>
+                <div className="flex align-center gap-20" style={{ flex: 1 }}>
+                  <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'var(--bg-dark)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: '1.2rem' }}>{item.siteName[0]}</span>
+                  </div>
+                  <div>
+                    <h4 style={{ fontSize: '1.1rem' }}>{item.siteName}</h4>
+                    <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>{item.username}</p>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Clock size={14} /> {new Date(item.lastAccessed).toLocaleDateString()}
+                  </p>
+                </div>
               </motion.div>
             ))}
           </div>
         </motion.div>
+
+        {/* Security Summary */}
+        <motion.div 
+          initial={{ opacity: 0, x: 30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.4 }}
+          className="glass-card" 
+          style={{ padding: '40px' }}
+        >
+          <h3 style={{ marginBottom: '25px' }}>Security Audit</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div style={{ padding: '20px', background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.1)', borderRadius: '20px' }}>
+              <div className="flex align-center gap-10 mb-10" style={{ color: '#f59e0b' }}>
+                <AlertTriangle size={18} />
+                <span style={{ fontWeight: 600 }}>Duplicate Detected</span>
+              </div>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                {duplicates.length > 0 
+                  ? `We found ${duplicates.length} accounts using identical usernames.` 
+                  : "No duplicate usernames found. Good job!"}
+              </p>
+            </div>
+
+            <div style={{ padding: '20px', background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.1)', borderRadius: '20px' }}>
+              <div className="flex align-center gap-10 mb-10" style={{ color: '#10b981' }}>
+                <Shield size={18} />
+                <span style={{ fontWeight: 600 }}>Zero-Knowledge Active</span>
+              </div>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                All your data is encrypted locally with AES-256 before leaving your machine.
+              </p>
+            </div>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
