@@ -31,12 +31,28 @@ body {
   color: var(--text-main);
   min-height: 100vh;
   overflow-x: hidden;
+  line-height: 1.5;
+}
+
+a {
+  text-decoration: none;
+  color: var(--primary);
+  transition: var(--transition);
+}
+
+a:hover {
+  opacity: 0.8;
 }
 
 h1, h2, h3, h4 {
   font-family: 'Outfit', sans-serif;
   font-weight: 600;
+  margin: 0;
 }
+
+.mb-10 { margin-bottom: 10px; }
+.mb-20 { margin-bottom: 20px; }
+.mb-30 { margin-bottom: 30px; }
 
 .glass-card {
   background: var(--bg-card);
