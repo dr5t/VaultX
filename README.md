@@ -1,38 +1,38 @@
-# VaultX — Secure Password Manager
+# 🔐 VaultX — Secure Password Manager
 
-A full-stack, zero-knowledge password manager with a React dashboard and Chrome Extension. Built with security and aesthetics in mind.
+A full-stack, secure password manager with a React dashboard and Chrome Extension. Built with focus on security, categorization, and seamless autofill.
 
 ## 🚀 Features
-- **Zero-Knowledge Encryption**: All credentials are encrypted client-side using AES-256-GCM. Your master password never leaves your device.
-- **Two-Factor Authentication (2FA)**: Robust support for TOTP (Google Authenticator, Authy, etc.).
-- **Chrome Extension**: Seamlessly autofill credentials based on the current website URL.
-- **Advanced Password Generator**: Create complex, secure passwords with customizable length and character sets.
-- **Security Audit**: Real-time detection of duplicate usernames and weak passwords.
-- **Premium UI**: Modern dark theme with glassmorphism and smooth animations.
+- **Client-Side Security**: Master password hashing with bcrypt and multi-layer encryption.
+- **Two-Factor Authentication (2FA)**: Support for TOTP via authenticator apps (Google Authenticator, Authy, etc.).
+- **Chrome Extension**: Intelligent autofill that detects website URLs and suggests matching credentials.
+- **Smart Generator**: Create complex, secure passwords with customizable strength and character sets.
+- **Audit System**: Real-time detection of duplicate usernames and password age alerts.
+- **Premium Design**: Modern dark-mode interface with glassmorphism and smooth micro-interactions.
 
 ## 🛠️ Setup Instructions
 
-### 1. Backend API (Node.js)
+### 1. Backend API (Node.js & Express)
 1. Navigate to the backend directory:
    ```bash
    cd backend
    ```
-2. Install dependencies:
+2. Install necessary packages:
    ```bash
    npm install
    ```
-3. Configure environment variables:
+3. Setup your environment variables:
    ```bash
    cp .env.example .env
    ```
-   *Update `.env` with your MongoDB URI (e.g., MongoDB Atlas or local) and set your secrets.*
-4. Start the server:
+   *Edit `.env` and provide your MongoDB connection string and JWT secrets.*
+4. Start the development server:
    ```bash
    npm run dev
    ```
-   *The API will run on `http://localhost:5000`.*
+   *The API will be live at `http://localhost:5000`.*
 
-### 2. Frontend Dashboard (React)
+### 2. Frontend Dashboard (React & Vite)
 1. Navigate to the frontend directory:
    ```bash
    cd frontend
@@ -41,22 +41,23 @@ A full-stack, zero-knowledge password manager with a React dashboard and Chrome 
    ```bash
    npm install
    ```
-3. Start the development server:
+3. Launch the application:
    ```bash
    npm run dev
    ```
-   *The dashboard will be available at `http://localhost:3000`.*
+   *The dashboard will be available at `http://localhost:3000` (or `http://localhost:5173`). Check your console for the exact port.*
 
 ### 3. Chrome Extension
-1. Open Chrome and navigate to `chrome://extensions/`.
-2. Enable **Developer mode** (top right).
-3. Click **Load unpacked** and select the `extension` folder in this project's root.
-4. **Login Sync**: Log in to the web dashboard at `http://localhost:3000`. The extension will automatically detect your session and sync the encryption keys.
+1. Open Chrome and go to `chrome://extensions/`.
+2. Turn on **Developer mode** in the top right corner.
+3. Click **Load unpacked** and select the `extension` folder from the project directory.
+4. **Usage**: Log in to the VaultX web dashboard. The extension will automatically sync your session to allow for secure autofilling on external sites.
 
-## 🔐 Security Architecture
-- **Encryption**: AES-256-GCM with a key derived via PBKDF2 (100,000 iterations).
-- **Zero Knowledge**: The server only stores encrypted blobs. It cannot decrypt your passwords.
-- **Transport**: Secure API communication with JWT and refresh token rotation.
+## 🛡️ Security Architecture
+- **Password Hashing**: Bcrypt (cost factor 12) for master passwords.
+- **Encryption**: AES-256-GCM for stored credentials.
+- **Auth**: JWT (JSON Web Tokens) with refresh token rotation.
+- **Transport**: Designed for HTTPS with secure cookie handling.
 
 ## 📄 License
-This project is for educational purposes. Ensure you use strong secrets in production environments.
+Educational use only. Ensure all environment secrets are rotated before any production deployment.
