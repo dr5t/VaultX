@@ -1,31 +1,73 @@
-import React, { useRef } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { Sphere, MeshDistortMaterial, Float } from '@react-three/drei';
+import React, { useRef, useMemo } from 'react';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import * as THREE from 'three';
 
-const AnimatedSphere = () => {
-  const meshRef = useRef();
+const ParticleField = ({ count = 2000 }) => {
+  const points = useMemo(() => {
+    const p = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      p[i * 3] = (Math.random() - 0.5) * 10;
+      p[i * 3 + 1] = (Math.random() - 0.5) * 10;
+      p[i * 3 + 2] = (Math.random() - 0.5) * 10;
+    }
+    return p;
+  }, [count]);
+
+  const pointsRef = useRef();
 
   useFrame((state) => {
-    const { clock } = state;
-    meshRef.current.rotation.x = clock.getElapsedTime() * 0.2;
-    meshRef.current.rotation.y = clock.getElapsedTime() * 0.3;
+    const time = state.clock.getElapsedTime();
+    pointsRef.current.rotation.y = time * 0.05;
+    pointsRef.current.rotation.x = Math.sin(time * 0.1) * 0.1;
   });
 
   return (
-    <Float speed={2} rotationIntensity={1} floatIntensity={1}>
-      <Sphere ref={meshRef} args={[1, 100, 100]} scale={2.5}>
-        <MeshDistortMaterial
-          color="#6366f1"
-          attach="material"
-          distort={0.4}
-          speed={1.5}
-          roughness={0.1}
-          metalness={0.8}
-          transparent
-          opacity={0.3}
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute
+          attach="attributes-position"
+          count={count}
+          array={points}
+          itemSize={3}
         />
-      </Sphere>
-    </Float>
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.015}
+        color="#6366f1"
+        transparent
+        opacity={0.4}
+        sizeAttenuation
+      />
+    </points>
+  );
+};
+
+const MouseReactiveOrb = () => {
+  const meshRef = useRef();
+  const { viewport, mouse } = useThree();
+
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+    const x = (mouse.x * viewport.width) / 2.5;
+    const y = (mouse.y * viewport.height) / 2.5;
+    
+    meshRef.current.position.x = THREE.MathUtils.lerp(meshRef.current.position.x, x, 0.1);
+    meshRef.current.position.y = THREE.MathUtils.lerp(meshRef.current.position.y, y, 0.1);
+    
+    meshRef.current.rotation.x = time * 0.2;
+    meshRef.current.rotation.y = time * 0.3;
+  });
+
+  return (
+    <mesh ref={meshRef}>
+      <icosahedronGeometry args={[1, 15]} />
+      <meshStandardMaterial
+        color="#818cf8"
+        wireframe
+        transparent
+        opacity={0.15}
+      />
+    </mesh>
   );
 };
 
@@ -38,14 +80,15 @@ const ThreeBackground = () => {
       width: '100%', 
       height: '100%', 
       zIndex: -1,
-      pointerEvents: 'none',
-      opacity: 0.6
+      background: 'radial-gradient(circle at 50% 50%, #0f172a 0%, #020617 100%)',
+      pointerEvents: 'none'
     }}>
-      <Canvas camera={{ position: [0, 0, 5] }}>
+      <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
         <ambientLight intensity={0.5} />
-        <pointLight position={[10, 10, 10]} intensity={1} />
-        <spotLight position={[-10, -10, -10]} intensity={0.5} />
-        <AnimatedSphere />
+        <pointLight position={[10, 10, 10]} intensity={1.5} color="#6366f1" />
+        <pointLight position={[-10, -10, -10]} intensity={1} color="#10b981" />
+        <ParticleField />
+        <MouseReactiveOrb />
       </Canvas>
     </div>
   );
