@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Shield, Mail, Lock, ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Shield, Mail, Lock, ArrowRight, Fingerprint } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Login = () => {
   const [email, setEmail] = useState('');
@@ -21,115 +21,134 @@ const Login = () => {
     try {
       const res = await login(email, password, totp);
       if (res.success) {
-        toast.success('Welcome back!');
+        toast.success('Access Granted');
         navigate('/');
       } else if (res.requiresTwoFactor) {
         setRequires2FA(true);
-        toast.error('2FA token required');
       } else {
         toast.error(res.message || 'Login failed');
       }
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Something went wrong');
+      toast.error(err.response?.data?.message || 'Authentication error');
     } finally {
       setLoading(false);
     }
   };
 
-  const containerVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { 
-      opacity: 1, 
-      scale: 1,
-      transition: { 
-        staggerChildren: 0.1,
-        duration: 0.5
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0 }
-  };
-
   return (
     <div className="flex align-center justify-center" style={{ minHeight: '100vh', padding: '20px' }}>
       <motion.div 
+        initial={{ opacity: 0, y: 30, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="glass-card" 
-        variants={containerVariants}
-        initial="hidden"
-        animate="visible"
-        style={{ width: '100%', maxWidth: '420px', padding: '40px', background: 'rgba(15, 23, 42, 0.6)' }}
+        style={{ width: '100%', maxWidth: '480px', padding: '50px', position: 'relative', overflow: 'hidden' }}
       >
-        <motion.div variants={itemVariants} className="flex align-center gap-10" style={{ justifyContent: 'center', marginBottom: '30px' }}>
-          <div style={{ padding: '12px', background: 'var(--primary)', borderRadius: '14px', boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)' }}>
-            <Shield size={32} color="white" />
-          </div>
-          <h1 style={{ fontSize: '2.2rem', fontWeight: 800 }}>Vault<span style={{ color: 'var(--primary)' }}>X</span></h1>
-        </motion.div>
+        {/* Animated Background Accent */}
+        <div style={{ 
+          position: 'absolute', top: '-50px', right: '-50px', width: '200px', height: '200px', 
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)',
+          zIndex: 0
+        }} />
 
-        <motion.h2 variants={itemVariants} style={{ textAlign: 'center', marginBottom: '8px' }}>Secure Login</motion.h2>
-        <motion.p variants={itemVariants} style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '30px', fontSize: '0.9rem' }}>
-          Decrypt your secure vault with your master password.
-        </motion.p>
-
-        <form onSubmit={handleSubmit}>
-          <motion.div variants={itemVariants} className="input-group">
-            <label><Mail size={14} style={{ verticalAlign: 'middle', marginRight: '5px' }} /> Email Address</label>
-            <input 
-              type="email" 
-              placeholder="name@example.com" 
-              required 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={requires2FA}
-            />
-          </motion.div>
-
-          <motion.div variants={itemVariants} className="input-group">
-            <label><Lock size={14} style={{ verticalAlign: 'middle', marginRight: '5px' }} /> Master Password</label>
-            <input 
-              type="password" 
-              placeholder="••••••••" 
-              required 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={requires2FA}
-            />
-          </motion.div>
-
-          {requires2FA && (
-            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="input-group">
-              <label>2FA Token</label>
-              <input 
-                type="text" 
-                placeholder="000000" 
-                required 
-                value={totp}
-                onChange={(e) => setTotp(e.target.value)}
-                autoFocus
-              />
-            </motion.div>
-          )}
-
-          <motion.button 
-            variants={itemVariants}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            className="btn btn-primary" 
-            style={{ width: '100%', padding: '16px', fontSize: '1rem' }} 
-            disabled={loading}
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring', damping: 15 }}
+            style={{ width: '64px', height: '64px', background: 'var(--primary)', borderRadius: '20px', margin: '0 auto 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 10px 30px rgba(99, 102, 241, 0.4)' }}
           >
-            {loading ? 'Processing...' : (requires2FA ? 'Verify & Unlock' : 'Unlock Vault')}
-            {!loading && <ArrowRight size={18} style={{ marginLeft: '10px' }} />}
-          </motion.button>
-        </form>
+            <Fingerprint size={32} color="white" />
+          </motion.div>
 
-        <motion.div variants={itemVariants} style={{ marginTop: '30px', textAlign: 'center', fontSize: '0.9rem' }}>
-          <span style={{ color: 'var(--text-muted)' }}>Don't have a vault? </span>
-          <Link to="/register" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '700' }}>Create one</Link>
-        </motion.div>
+          <h1 className="text-gradient" style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '12px', fontWeight: 800 }}>
+            Welcome Back
+          </h1>
+          <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '40px', fontSize: '1rem' }}>
+            Securely access your encrypted vault.
+          </p>
+
+          <form onSubmit={handleSubmit}>
+            <AnimatePresence mode="wait">
+              {!requires2FA ? (
+                <motion.div
+                  key="auth-fields"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="input-group">
+                    <label>ID / Email Address</label>
+                    <div style={{ position: 'relative' }}>
+                      <Mail size={18} style={{ position: 'absolute', left: '16px', top: '16px', color: 'var(--text-muted)' }} />
+                      <input 
+                        type="email" 
+                        style={{ paddingLeft: '48px' }}
+                        placeholder="your@email.com" 
+                        required 
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="input-group">
+                    <label>Master Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <Lock size={18} style={{ position: 'absolute', left: '16px', top: '16px', color: 'var(--text-muted)' }} />
+                      <input 
+                        type="password" 
+                        style={{ paddingLeft: '48px' }}
+                        placeholder="••••••••••••" 
+                        required 
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="2fa-field"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <div className="input-group">
+                    <label>Verification Token</label>
+                    <input 
+                      type="text" 
+                      placeholder="Enter 6-digit code" 
+                      required 
+                      value={totp}
+                      onChange={(e) => setTotp(e.target.value)}
+                      autoFocus
+                      style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.5em', fontWeight: 700 }}
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <motion.button 
+              whileHover={{ scale: 1.02, translateY: -2 }}
+              whileTap={{ scale: 0.98 }}
+              className="btn btn-primary" 
+              style={{ width: '100%', padding: '18px', marginTop: '10px' }} 
+              disabled={loading}
+            >
+              {loading ? 'Authenticating...' : (requires2FA ? 'Confirm Identity' : 'Unlock Vault')}
+              <ArrowRight size={20} style={{ marginLeft: '12px' }} />
+            </motion.button>
+          </form>
+
+          <div style={{ marginTop: '40px', textAlign: 'center', fontSize: '0.95rem' }}>
+            <span style={{ color: 'var(--text-muted)' }}>New to VaultX? </span>
+            <Link to="/register" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '700' }}>Create Account</Link>
+          </div>
+        </div>
       </motion.div>
     </div>
   );
