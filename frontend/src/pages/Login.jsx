@@ -132,6 +132,12 @@ const Login = () => {
               )}
             </AnimatePresence>
 
+            <div style={{ textAlign: 'right', marginBottom: '20px' }}>
+              <Link to="/forgot-password" style={{ color: 'var(--text-muted)', fontSize: '0.85rem', textDecoration: 'none' }}>
+                Forgot Master Password?
+              </Link>
+            </div>
+
             <motion.button 
               whileHover={{ scale: 1.02, translateY: -2 }}
               whileTap={{ scale: 0.98 }}
