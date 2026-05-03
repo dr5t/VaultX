@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Key, Mail, Smartphone, AlertCircle, LogOut } from 'lucide-react';
+import { Shield, Key, Mail, Smartphone, AlertCircle, LogOut, Lock, HelpCircle, CheckCircle } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +11,11 @@ const Settings = () => {
   const [totpToken, setTotpToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
+  const [setupType, setSetupType] = useState(null); // 'authenticator' or 'question'
+  
+  const [securityQuestion, setSecurityQuestion] = useState('');
+  const [securityAnswer, setSecurityAnswer] = useState('');
+
   const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5001' : '';
 
   const getAuthHeaders = () => {
@@ -26,6 +31,7 @@ const Settings = () => {
       });
       if (res.data.success) {
         setTwoFactorData(res.data);
+        setSetupType('authenticator');
         setShowSetup(true);
       }
     } catch (err) {
@@ -42,17 +48,44 @@ const Settings = () => {
     }
     setLoading(true);
     try {
-      const res = await axios.post(`${API_BASE}/api/auth/2fa/verify`, { token: totpToken }, {
+      const res = await axios.post(`${API_BASE}/api/auth/2fa/verify`, { 
+        token: totpToken,
+        secret: twoFactorData.secret 
+      }, {
         headers: getAuthHeaders()
       });
       if (res.data.success) {
-        toast.success('2FA enabled successfully!');
+        toast.success('Authenticator enabled successfully!');
         setShowSetup(false);
-        // Refresh auth state to update UI
         window.location.reload(); 
       }
     } catch (err) {
       toast.error('Invalid token. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const setupSecurityQuestion = async () => {
+    if (!securityQuestion || !securityAnswer) {
+      toast.error('Please fill both question and answer');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await axios.post(`${API_BASE}/api/auth/2fa/security-questions/setup`, {
+        question: securityQuestion,
+        answer: securityAnswer
+      }, {
+        headers: getAuthHeaders()
+      });
+      if (res.data.success) {
+        toast.success('Security question enabled!');
+        setShowSetup(false);
+        window.location.reload();
+      }
+    } catch (err) {
+      toast.error('Failed to set security question');
     } finally {
       setLoading(false);
     }
@@ -68,11 +101,11 @@ const Settings = () => {
         headers: getAuthHeaders()
       });
       if (res.data.success) {
-        toast.success('2FA has been disabled');
+        toast.success('Multi-factor auth has been disabled');
         window.location.reload();
       }
     } catch (err) {
-      toast.error('Failed to disable 2FA. Check your password.');
+      toast.error('Failed to disable. Check your password.');
     } finally {
       setLoading(false);
     }
@@ -132,39 +165,61 @@ const Settings = () => {
                   {user?.twoFactorEnabled ? 'PROTECTED' : 'UNPROTECTED'}
                 </p>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  Authenticator-based verification.
+                  {user?.twoFactorType === 'security_question' ? 'Security Question Active' : 'Authenticator-based verification.'}
                 </p>
               </div>
               {user?.twoFactorEnabled ? (
                 <button className="btn" onClick={disable2FA} style={{ background: 'transparent', color: '#ef4444', fontWeight: '700' }}>Disable</button>
               ) : (
-                !showSetup && <button className="btn btn-primary" onClick={setup2FA} style={{ padding: '8px 20px' }}>Setup</button>
+                !showSetup && (
+                  <div className="flex gap-10">
+                    <button className="btn" onClick={() => { setSetupType('question'); setShowSetup(true); }} style={{ background: 'var(--glass)', color: 'white', padding: '8px 15px', fontSize: '0.8rem' }}>Question</button>
+                    <button className="btn btn-primary" onClick={setup2FA} style={{ padding: '8px 20px', fontSize: '0.8rem' }}>App</button>
+                  </div>
+                )
               )}
             </div>
           </div>
 
           <AnimatePresence>
-            {showSetup && twoFactorData && (
+            {showSetup && (
               <motion.div 
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
                 style={{ marginTop: '30px', overflow: 'hidden' }}
               >
-                <div style={{ padding: '30px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid var(--primary)' }}>
-                  <div style={{ textAlign: 'center', marginBottom: '25px', background: 'white', padding: '15px', display: 'inline-block', borderRadius: '15px', boxShadow: '0 0 30px rgba(99, 102, 241, 0.3)' }}>
-                    <img src={twoFactorData.qrCode} alt="2FA" style={{ width: '180px', height: '180px' }} />
+                {setupType === 'authenticator' ? (
+                  <div style={{ padding: '30px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid var(--primary)' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '25px', background: 'white', padding: '15px', display: 'inline-block', borderRadius: '15px' }}>
+                      <img src={twoFactorData?.qrCode} alt="2FA" style={{ width: '180px', height: '180px' }} />
+                    </div>
+                    <input 
+                      type="text" placeholder="000 000" maxLength="6"
+                      value={totpToken} onChange={(e) => setTotpToken(e.target.value)}
+                      style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.3em', marginBottom: '20px' }}
+                    />
+                    <div className="flex gap-10">
+                      <button className="btn btn-primary" onClick={verify2FA} disabled={loading} style={{ flex: 2 }}>Verify</button>
+                      <button className="btn" onClick={() => setShowSetup(false)} style={{ flex: 1, background: 'var(--glass)', color: 'white' }}>Exit</button>
+                    </div>
                   </div>
-                  <input 
-                    type="text" placeholder="000 000" maxLength="6"
-                    value={totpToken} onChange={(e) => setTotpToken(e.target.value)}
-                    style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.3em', marginBottom: '20px' }}
-                  />
-                  <div className="flex gap-10">
-                    <button className="btn btn-primary" onClick={verify2FA} disabled={loading} style={{ flex: 2 }}>Enable Now</button>
-                    <button className="btn" onClick={() => setShowSetup(false)} style={{ flex: 1, background: 'var(--glass)', color: 'white' }}>Exit</button>
+                ) : (
+                  <div style={{ padding: '30px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid var(--secondary)' }}>
+                    <div className="input-group">
+                      <label>Secret Question</label>
+                      <input type="text" placeholder="What was your first pet's name?" value={securityQuestion} onChange={e => setSecurityQuestion(e.target.value)} />
+                    </div>
+                    <div className="input-group">
+                      <label>Secret Answer</label>
+                      <input type="password" placeholder="Answer (case-insensitive)" value={securityAnswer} onChange={e => setSecurityAnswer(e.target.value)} />
+                    </div>
+                    <div className="flex gap-10">
+                      <button className="btn btn-primary" onClick={setupSecurityQuestion} disabled={loading} style={{ flex: 2, background: 'var(--secondary)' }}>Set Question</button>
+                      <button className="btn" onClick={() => setShowSetup(false)} style={{ flex: 1, background: 'var(--glass)', color: 'white' }}>Exit</button>
+                    </div>
                   </div>
-                </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
