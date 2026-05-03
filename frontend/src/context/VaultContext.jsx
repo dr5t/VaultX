@@ -6,6 +6,12 @@ const API_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:5001/api/credentials' 
   : '/api/credentials';
 
+// Helper to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('accessToken');
+  return { Authorization: `Bearer ${token}` };
+};
+
 export const VaultProvider = ({ children }) => {
   const [credentials, setCredentials] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
@@ -14,7 +20,10 @@ export const VaultProvider = ({ children }) => {
   const fetchCredentials = useCallback(async (params = {}) => {
     setLoading(true);
     try {
-      const res = await axios.get(API_URL, { params });
+      const res = await axios.get(API_URL, { 
+        params,
+        headers: getAuthHeaders()
+      });
       if (res.data.success) {
         setCredentials(res.data.credentials);
         setDuplicates(res.data.duplicates);
@@ -27,7 +36,9 @@ export const VaultProvider = ({ children }) => {
   }, []);
 
   const addCredential = async (data) => {
-    const res = await axios.post(API_URL, data);
+    const res = await axios.post(API_URL, data, {
+      headers: getAuthHeaders()
+    });
     if (res.data.success) {
       setCredentials((prev) => [...prev, res.data.credential]);
     }
@@ -35,7 +46,9 @@ export const VaultProvider = ({ children }) => {
   };
 
   const updateCredential = async (id, data) => {
-    const res = await axios.put(`${API_URL}/${id}`, data);
+    const res = await axios.put(`${API_URL}/${id}`, data, {
+      headers: getAuthHeaders()
+    });
     if (res.data.success) {
       setCredentials((prev) => 
         prev.map((c) => (c._id === id ? res.data.credential : c))
@@ -45,7 +58,9 @@ export const VaultProvider = ({ children }) => {
   };
 
   const deleteCredential = async (id) => {
-    const res = await axios.delete(`${API_URL}/${id}`);
+    const res = await axios.delete(`${API_URL}/${id}`, {
+      headers: getAuthHeaders()
+    });
     if (res.data.success) {
       setCredentials((prev) => prev.filter((c) => c._id !== id));
     }
