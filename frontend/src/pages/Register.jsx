@@ -1,23 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { toast } from 'react-hot-toast';
-import { Shield, Mail, Lock, ArrowRight, UserPlus } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Shield, Mail, Lock, ArrowRight, UserPlus, CheckCircle2, Circle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Register = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [strength, setStrength] = useState(0);
   
   const { register } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    let s = 0;
+    if (password.length > 8) s++;
+    if (/[A-Z]/.test(password)) s++;
+    if (/[0-9]/.test(password)) s++;
+    if (/[^A-Za-z0-9]/.test(password)) s++;
+    setStrength(s);
+  }, [password]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (password !== confirmPassword) {
       return toast.error('Passwords do not match');
+    }
+    if (strength < 2) {
+      return toast.error('Please use a stronger master password');
     }
     setLoading(true);
     try {
@@ -35,6 +48,8 @@ const Register = () => {
     }
   };
 
+  const strengthColors = ['#ef4444', '#f59e0b', '#10b981', '#6366f1'];
+
   return (
     <div className="flex align-center justify-center" style={{ minHeight: '100vh', padding: '20px' }}>
       <motion.div 
@@ -42,7 +57,7 @@ const Register = () => {
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="glass-card" 
-        style={{ width: '100%', maxWidth: '480px', padding: '50px' }}
+        style={{ width: '100%', maxWidth: '500px', padding: '50px', position: 'relative' }}
       >
         <motion.div 
           initial={{ opacity: 0, scale: 0.5 }}
@@ -54,21 +69,21 @@ const Register = () => {
         </motion.div>
 
         <h1 className="text-gradient" style={{ fontSize: '2.5rem', textAlign: 'center', marginBottom: '12px', fontWeight: 800 }}>
-          Create Vault
+          Initialize Vault
         </h1>
         <p style={{ textAlign: 'center', color: 'var(--text-muted)', marginBottom: '40px', fontSize: '1rem' }}>
-          Start securing your digital identity today.
+          Create your zero-knowledge encrypted storage.
         </p>
 
         <form onSubmit={handleSubmit}>
           <div className="input-group">
-            <label>Email Address</label>
+            <label>Master Identity (Email)</label>
             <div style={{ position: 'relative' }}>
               <Mail size={18} style={{ position: 'absolute', left: '16px', top: '16px', color: 'var(--text-muted)' }} />
               <input 
                 type="email" 
                 style={{ paddingLeft: '48px' }}
-                placeholder="your@email.com" 
+                placeholder="identity@vaultx.com" 
                 required 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -76,14 +91,14 @@ const Register = () => {
             </div>
           </div>
 
-          <div className="input-group">
+          <div className="input-group" style={{ marginBottom: '10px' }}>
             <label>Master Password</label>
             <div style={{ position: 'relative' }}>
               <Lock size={18} style={{ position: 'absolute', left: '16px', top: '16px', color: 'var(--text-muted)' }} />
               <input 
                 type="password" 
                 style={{ paddingLeft: '48px' }}
-                placeholder="Create a strong password" 
+                placeholder="Choose a strong key" 
                 required 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -91,14 +106,21 @@ const Register = () => {
             </div>
           </div>
 
+          {/* Strength Meter */}
+          <div className="flex gap-5" style={{ marginBottom: '25px', height: '4px' }}>
+            {[0, 1, 2, 3].map(i => (
+              <div key={i} style={{ flex: 1, borderRadius: '10px', background: i < strength ? strengthColors[strength - 1] : 'var(--glass)', transition: 'all 0.3s' }} />
+            ))}
+          </div>
+
           <div className="input-group">
-            <label>Confirm Password</label>
+            <label>Confirm Master Password</label>
             <div style={{ position: 'relative' }}>
               <Lock size={18} style={{ position: 'absolute', left: '16px', top: '16px', color: 'var(--text-muted)' }} />
               <input 
                 type="password" 
                 style={{ paddingLeft: '48px' }}
-                placeholder="Repeat password" 
+                placeholder="Verify your key" 
                 required 
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -106,15 +128,33 @@ const Register = () => {
             </div>
           </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '30px' }}>
+            <div className="flex align-center gap-8" style={{ fontSize: '0.75rem', color: password.length >= 8 ? 'var(--accent)' : 'var(--text-muted)' }}>
+              {password.length >= 8 ? <CheckCircle2 size={12} /> : <Circle size={12} />} 8+ Characters
+            </div>
+            <div className="flex align-center gap-8" style={{ fontSize: '0.75rem', color: strength >= 3 ? 'var(--accent)' : 'var(--text-muted)' }}>
+              {strength >= 3 ? <CheckCircle2 size={12} /> : <Circle size={12} />} Complexity
+            </div>
+          </div>
+
           <motion.button 
             whileHover={{ scale: 1.02, translateY: -2 }}
             whileTap={{ scale: 0.98 }}
             className="btn btn-primary" 
-            style={{ width: '100%', padding: '18px', marginTop: '10px' }} 
+            style={{ width: '100%', padding: '18px', position: 'relative', overflow: 'hidden' }} 
             disabled={loading}
           >
-            {loading ? 'Initializing...' : 'Initialize My Vault'}
-            <ArrowRight size={20} style={{ marginLeft: '12px' }} />
+            <AnimatePresence mode="wait">
+              {loading ? (
+                <motion.span key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  Securing Vault...
+                </motion.span>
+              ) : (
+                <motion.span key="normal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  Begin Encryption <ArrowRight size={20} style={{ marginLeft: '12px' }} />
+                </motion.span>
+              )}
+            </AnimatePresence>
           </motion.button>
         </form>
 

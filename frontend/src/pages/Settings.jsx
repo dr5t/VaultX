@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Key, Mail, Smartphone, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Shield, Key, Mail, Smartphone, AlertCircle, LogOut, ChevronRight } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const Settings = () => {
   const { user, logout } = useAuth();
@@ -14,7 +15,7 @@ const Settings = () => {
   const setup2FA = async () => {
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/2fa/setup');
+      const res = await axios.post('http://localhost:5001/api/auth/2fa/setup');
       if (res.data.success) {
         setTwoFactorData(res.data);
         setShowSetup(true);
@@ -29,11 +30,10 @@ const Settings = () => {
   const verify2FA = async () => {
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/2fa/verify', { token: totpToken });
+      const res = await axios.post('http://localhost:5001/api/auth/2fa/verify', { token: totpToken });
       if (res.data.success) {
         toast.success('2FA enabled successfully!');
         setShowSetup(false);
-        // In a real app, you'd want to refresh the user state here
         window.location.reload(); 
       }
     } catch (err) {
@@ -49,7 +49,7 @@ const Settings = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/2fa/disable', { masterPassword: password });
+      const res = await axios.post('http://localhost:5001/api/auth/2fa/disable', { masterPassword: password });
       if (res.data.success) {
         toast.success('2FA has been disabled');
         window.location.reload();
@@ -62,94 +62,117 @@ const Settings = () => {
   };
 
   return (
-    <div style={{ maxWidth: '800px' }}>
-      <h1 style={{ marginBottom: '10px' }}>Settings</h1>
-      <p style={{ color: 'var(--text-muted)', marginBottom: '30px' }}>Manage your account and security preferences.</p>
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="container"
+      style={{ paddingTop: '20px' }}
+    >
+      <header style={{ marginBottom: '40px' }}>
+        <h1 className="text-gradient" style={{ fontSize: '2.5rem' }}>Security Center</h1>
+        <p style={{ color: 'var(--text-muted)' }}>Configure your vault's defensive layers.</p>
+      </header>
 
-      <div className="flex gap-20" style={{ flexDirection: 'column' }}>
-        {/* Account Info */}
-        <div className="glass-card" style={{ padding: '30px' }}>
-          <div className="flex align-center gap-10" style={{ marginBottom: '20px' }}>
-            <Mail size={20} color="var(--primary)" />
-            <h3>Account Information</h3>
-          </div>
-          <div className="input-group">
-            <label>Email Address</label>
-            <input type="text" value={user?.email || ''} disabled style={{ background: 'var(--glass)' }} />
-          </div>
-          <button className="btn" onClick={logout} style={{ color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)' }}>
-            Logout from all sessions
-          </button>
-        </div>
-
-        {/* Security / 2FA */}
-        <div className="glass-card" style={{ padding: '30px' }}>
-          <div className="flex align-center gap-10" style={{ marginBottom: '20px' }}>
-            <Shield size={20} color="var(--accent)" />
-            <h3>Two-Factor Authentication (2FA)</h3>
+      <div style={{ maxWidth: '900px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px' }}>
+        {/* Account Control */}
+        <motion.div whileHover={{ translateY: -5 }} className="glass-card" style={{ padding: '40px' }}>
+          <div className="flex align-center gap-15 mb-30">
+            <div style={{ padding: '12px', background: 'rgba(99, 102, 241, 0.1)', color: 'var(--primary)', borderRadius: '14px' }}>
+              <Mail size={24} />
+            </div>
+            <h3 style={{ fontSize: '1.4rem' }}>Account</h3>
           </div>
           
-          <div className="flex align-center justify-between" style={{ padding: '20px', background: 'var(--glass)', borderRadius: '12px', border: '1px solid var(--glass-border)' }}>
-            <div className="flex align-center gap-10">
-              <Smartphone size={24} color={user?.twoFactorEnabled ? 'var(--accent)' : 'var(--text-muted)'} />
+          <div className="input-group">
+            <label>Registered Email</label>
+            <input type="text" value={user?.email || ''} disabled style={{ background: 'rgba(255,255,255,0.02)', cursor: 'not-allowed', color: 'var(--text-muted)' }} />
+          </div>
+
+          <motion.button 
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="btn" 
+            onClick={logout} 
+            style={{ width: '100%', marginTop: '20px', background: 'rgba(239, 68, 68, 0.05)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.1)' }}
+          >
+            <LogOut size={18} /> Terminate All Sessions
+          </motion.button>
+        </motion.div>
+
+        {/* 2FA Control */}
+        <motion.div whileHover={{ translateY: -5 }} className="glass-card" style={{ padding: '40px' }}>
+          <div className="flex align-center gap-15 mb-30">
+            <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent)', borderRadius: '14px' }}>
+              <Smartphone size={24} />
+            </div>
+            <h3 style={{ fontSize: '1.4rem' }}>Multi-Factor Auth</h3>
+          </div>
+
+          <div style={{ padding: '24px', background: 'rgba(0,0,0,0.2)', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
+            <div className="flex align-center justify-between">
               <div>
-                <p style={{ fontWeight: '600' }}>Authenticator App</p>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                  {user?.twoFactorEnabled ? 'Your account is protected with 2FA.' : 'Add an extra layer of security to your account.'}
+                <p style={{ fontWeight: '700', color: user?.twoFactorEnabled ? 'var(--accent)' : 'white' }}>
+                  {user?.twoFactorEnabled ? 'PROTECTED' : 'UNPROTECTED'}
+                </p>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                  Authenticator-based verification.
                 </p>
               </div>
+              {user?.twoFactorEnabled ? (
+                <button className="btn" onClick={disable2FA} style={{ background: 'transparent', color: 'var(--danger)', fontWeight: '700' }}>Disable</button>
+              ) : (
+                !showSetup && <button className="btn btn-primary" onClick={setup2FA} style={{ padding: '8px 20px' }}>Setup</button>
+              )}
             </div>
-            {user?.twoFactorEnabled ? (
-              <button className="btn" onClick={disable2FA} style={{ color: 'var(--danger)', border: '1px solid var(--danger)' }}>Disable</button>
-            ) : (
-              !showSetup && <button className="btn btn-primary" onClick={setup2FA}>Enable 2FA</button>
+          </div>
+
+          <AnimatePresence>
+            {showSetup && twoFactorData && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                style={{ marginTop: '30px', overflow: 'hidden' }}
+              >
+                <div style={{ padding: '30px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid var(--primary)' }}>
+                  <div style={{ textAlign: 'center', marginBottom: '25px', background: 'white', padding: '15px', display: 'inline-block', borderRadius: '15px', boxShadow: '0 0 30px rgba(99, 102, 241, 0.3)' }}>
+                    <img src={twoFactorData.qrCode} alt="2FA" style={{ width: '180px', height: '180px' }} />
+                  </div>
+                  <input 
+                    type="text" placeholder="000 000" maxLength="6"
+                    value={totpToken} onChange={(e) => setTotpToken(e.target.value)}
+                    style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.3em', marginBottom: '20px' }}
+                  />
+                  <div className="flex gap-10">
+                    <button className="btn btn-primary" onClick={verify2FA} disabled={loading} style={{ flex: 2 }}>Enable Now</button>
+                    <button className="btn" onClick={() => setShowSetup(false)} style={{ flex: 1, background: 'var(--glass)', color: 'white' }}>Exit</button>
+                  </div>
+                </div>
+              </motion.div>
             )}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Global Protection Note */}
+        <motion.div whileHover={{ translateY: -5 }} className="glass-card" style={{ padding: '40px', gridColumn: '1 / -1', borderLeft: '6px solid var(--primary)' }}>
+          <div className="flex align-center gap-15 mb-15">
+            <AlertCircle size={24} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.4rem' }}>Master Key Protocol</h3>
           </div>
-
-          {showSetup && twoFactorData && (
-            <div className="animate-fade-in" style={{ marginTop: '30px', padding: '20px', background: 'var(--bg-dark)', borderRadius: '12px', border: '1px solid var(--primary)' }}>
-              <h4>Setup 2FA</h4>
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', margin: '10px 0 20px' }}>
-                1. Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
-              </p>
-              
-              <div style={{ textAlign: 'center', marginBottom: '20px', background: 'white', padding: '10px', display: 'inline-block', borderRadius: '10px' }}>
-                <img src={twoFactorData.qrCode} alt="2FA QR Code" style={{ width: '200px', height: '200px' }} />
+          <div style={{ color: 'var(--text-muted)', fontSize: '0.95rem', lineHeight: '1.8' }}>
+            <p>VaultX utilizes <span style={{ color: 'white', fontWeight: 600 }}>Zero-Knowledge Proof</span> architecture. Your master password is the only key capable of unlocking your data.</p>
+            <div style={{ marginTop: '20px', display: 'flex', gap: '20px' }}>
+              <div className="flex align-center gap-8" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 20px', borderRadius: '12px' }}>
+                <Key size={16} /> <span>AES-256-GCM Encrypted</span>
               </div>
-
-              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '10px' }}>
-                2. Enter the 6-digit code from your app:
-              </p>
-              
-              <div className="flex gap-10">
-                <input 
-                  type="text" 
-                  placeholder="000000" 
-                  value={totpToken}
-                  onChange={(e) => setTotpToken(e.target.value)}
-                  style={{ maxWidth: '200px' }}
-                />
-                <button className="btn btn-primary" onClick={verify2FA} disabled={loading}>
-                  Verify & Enable
-                </button>
-                <button className="btn" onClick={() => setShowSetup(false)}>Cancel</button>
+              <div className="flex align-center gap-8" style={{ background: 'rgba(255,255,255,0.03)', padding: '10px 20px', borderRadius: '12px' }}>
+                <Shield size={16} /> <span>End-to-End Integrity</span>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Master Password Note */}
-        <div className="glass-card" style={{ padding: '30px', borderLeft: '4px solid var(--warning)' }}>
-          <div className="flex align-center gap-10" style={{ marginBottom: '10px' }}>
-            <AlertCircle size={20} color="var(--warning)" />
-            <h3 style={{ color: 'var(--warning)' }}>Master Password Recovery</h3>
           </div>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-            VaultX uses zero-knowledge encryption. We do not store your master password. If you lose it, we <strong>cannot</strong> recover your data or reset your password.
-          </p>
-        </div>
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 

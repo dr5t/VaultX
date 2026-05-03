@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Shield, LayoutDashboard, Database, Key, Settings, LogOut, Github } from 'lucide-react';
+import { Shield, LayoutDashboard, Database, Key, Settings, LogOut, Info } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 
@@ -92,7 +92,7 @@ const Sidebar = () => {
         <div style={{ marginTop: '30px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.8rem' }}>
           <p>© 2026 VaultX Security</p>
           <div className="flex justify-center gap-10" style={{ marginTop: '10px' }}>
-            <Github size={14} style={{ cursor: 'pointer' }} />
+            <Info size={14} style={{ cursor: 'pointer' }} />
           </div>
         </div>
       </div>

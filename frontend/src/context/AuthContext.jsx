@@ -4,7 +4,7 @@ import { deriveKey } from '../utils/crypto';
 
 const AuthContext = createContext();
 
-const API_URL = 'http://localhost:5000/api/auth';
+const API_URL = 'http://localhost:5001/api/auth';
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);

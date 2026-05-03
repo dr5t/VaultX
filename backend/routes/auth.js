@@ -62,6 +62,8 @@ router.post('/register', async (req, res) => {
       user: { id: email.toLowerCase(), email, twoFactorEnabled: false }
     });
   } catch (err) {
+    console.error('Registration Error:', err);
+    require('fs').appendFileSync('error.log', `[${new Date().toISOString()}] ${err.stack}\n`);
     res.status(500).json({ success: false, message: err.message });
   }
 });

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useCallback } from 'react';
 import axios from 'axios';
 
 const VaultContext = createContext();
-const API_URL = 'http://localhost:5000/api/credentials';
+const API_URL = 'http://localhost:5001/api/credentials';
 
 export const VaultProvider = ({ children }) => {
   const [credentials, setCredentials] = useState([]);

@@ -21,12 +21,13 @@ const credentialRoutes = require('./routes/credentials');
 const categoryRoutes = require('./routes/categories');
 
 const app = express();
+app.use((req, res, next) => { console.log(`👉 ${req.method} ${req.url}`); next(); });
 
 // Security middleware
 app.use(helmet());
 app.use(
   cors({
-    origin: [process.env.CLIENT_URL || 'http://localhost:3000', 'chrome-extension://'],
+    origin: [process.env.CLIENT_URL || 'http://localhost:3001', 'chrome-extension://'],
     credentials: true,
   })
 );
