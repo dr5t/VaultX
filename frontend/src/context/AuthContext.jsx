@@ -46,8 +46,8 @@ export const AuthProvider = ({ children }) => {
     return res.data;
   };
 
-  const login = async (email, masterPassword, totpToken) => {
-    const res = await axios.post(`${API_URL}/login`, { email, masterPassword, totpToken });
+  const login = async (email, masterPassword, totpToken, securityAnswer) => {
+    const res = await axios.post(`${API_URL}/login`, { email, masterPassword, totpToken, securityAnswer });
     if (res.data.success) {
       const key = await deriveKey(masterPassword);
       setEncryptionKey(key);
@@ -61,6 +61,18 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('user', JSON.stringify(data.user));
     axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
     setUser(data.user);
+  };
+
+  const refreshUser = async () => {
+    try {
+      const res = await axios.get(`${API_URL.replace('/auth', '')}/auth/me`);
+      if (res.data.success) {
+        localStorage.setItem('user', JSON.stringify(res.data.user));
+        setUser(res.data.user);
+      }
+    } catch (err) {
+      console.error('User refresh failed', err);
+    }
   };
 
   const logout = async () => {

@@ -6,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Settings = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
   const [twoFactorData, setTwoFactorData] = useState(null);
   const [totpToken, setTotpToken] = useState('');
   const [loading, setLoading] = useState(false);
@@ -43,7 +43,7 @@ const Settings = () => {
 
   const verify2FA = async () => {
     if (!totpToken || totpToken.length < 6) {
-      toast.error('Please enter a valid 6-digit code');
+      toast.error('Please enter a 6-digit code');
       return;
     }
     setLoading(true);
@@ -57,10 +57,10 @@ const Settings = () => {
       if (res.data.success) {
         toast.success('Authenticator enabled successfully!');
         setShowSetup(false);
-        window.location.reload(); 
+        await refreshUser();
       }
     } catch (err) {
-      toast.error('Invalid token. Please try again.');
+      toast.error(err.response?.data?.message || 'Invalid token. Try again.');
     } finally {
       setLoading(false);
     }
@@ -82,7 +82,7 @@ const Settings = () => {
       if (res.data.success) {
         toast.success('Security question enabled!');
         setShowSetup(false);
-        window.location.reload();
+        await refreshUser();
       }
     } catch (err) {
       toast.error('Failed to set security question');
@@ -92,7 +92,7 @@ const Settings = () => {
   };
 
   const disable2FA = async () => {
-    const password = prompt('Please enter your master password to disable 2FA:');
+    const password = prompt('Enter your master password to disable 2FA:');
     if (!password) return;
 
     setLoading(true);
@@ -101,8 +101,8 @@ const Settings = () => {
         headers: getAuthHeaders()
       });
       if (res.data.success) {
-        toast.success('Multi-factor auth has been disabled');
-        window.location.reload();
+        toast.success('Multi-factor auth disabled');
+        await refreshUser();
       }
     } catch (err) {
       toast.error('Failed to disable. Check your password.');
@@ -165,7 +165,7 @@ const Settings = () => {
                   {user?.twoFactorEnabled ? 'PROTECTED' : 'UNPROTECTED'}
                 </p>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                  {user?.twoFactorType === 'security_question' ? 'Security Question Active' : 'Authenticator-based verification.'}
+                  {user?.twoFactorType === 'security_question' ? 'Security Question Active' : (user?.twoFactorEnabled ? 'Authenticator App Active' : 'No secondary verification.')}
                 </p>
               </div>
               {user?.twoFactorEnabled ? (
@@ -194,13 +194,16 @@ const Settings = () => {
                     <div style={{ textAlign: 'center', marginBottom: '25px', background: 'white', padding: '15px', display: 'inline-block', borderRadius: '15px' }}>
                       <img src={twoFactorData?.qrCode} alt="2FA" style={{ width: '180px', height: '180px' }} />
                     </div>
-                    <input 
-                      type="text" placeholder="000 000" maxLength="6"
-                      value={totpToken} onChange={(e) => setTotpToken(e.target.value)}
-                      style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.3em', marginBottom: '20px' }}
-                    />
+                    <div className="input-group">
+                      <label>Verification Code</label>
+                      <input 
+                        type="text" placeholder="000 000" maxLength="6"
+                        value={totpToken} onChange={(e) => setTotpToken(e.target.value)}
+                        style={{ textAlign: 'center', fontSize: '1.5rem', letterSpacing: '0.3em' }}
+                      />
+                    </div>
                     <div className="flex gap-10">
-                      <button className="btn btn-primary" onClick={verify2FA} disabled={loading} style={{ flex: 2 }}>Verify</button>
+                      <button className="btn btn-primary" onClick={verify2FA} disabled={loading} style={{ flex: 2 }}>Verify & Enable</button>
                       <button className="btn" onClick={() => setShowSetup(false)} style={{ flex: 1, background: 'var(--glass)', color: 'white' }}>Exit</button>
                     </div>
                   </div>
@@ -208,7 +211,7 @@ const Settings = () => {
                   <div style={{ padding: '30px', background: 'rgba(255,255,255,0.02)', borderRadius: '20px', border: '1px solid var(--secondary)' }}>
                     <div className="input-group">
                       <label>Secret Question</label>
-                      <input type="text" placeholder="What was your first pet's name?" value={securityQuestion} onChange={e => setSecurityQuestion(e.target.value)} />
+                      <input type="text" placeholder="e.g. My first car's model?" value={securityQuestion} onChange={e => setSecurityQuestion(e.target.value)} />
                     </div>
                     <div className="input-group">
                       <label>Secret Answer</label>

@@ -73,17 +73,45 @@ router.post('/login', async (req, res) => {
     }
 
     if (user.twoFactorEnabled) {
-      if (user.twoFactorType === 'authenticator') {
-        if (!totpToken) return res.status(200).json({ success: false, requiresTwoFactor: true, message: '2FA token required' });
+      if (!totpToken && !securityAnswer) {
+        return res.status(200).json({ 
+          success: false, 
+          requiresTwoFactor: true, 
+          twoFactorType: user.twoFactorType,
+          question: user.twoFactorType === 'security_question' ? user.securityQuestion : null,
+          message: '2FA required' 
+        });
+      }
+
+      if (user.twoFactorType === 'authenticator' && totpToken) {
         const valid = speakeasy.totp.verify({
           secret: user.twoFactorSecret,
           encoding: 'base32',
           token: totpToken,
           window: 1,
         });
-        if (!valid) return res.status(401).json({ success: false, message: 'Invalid 2FA token' });
+        if (!valid) {
+          return res.status(200).json({ 
+            success: false, 
+            requiresTwoFactor: true, 
+            canFallback: !!user.securityQuestion,
+            question: user.securityQuestion,
+            message: 'Invalid TOTP code' 
+          });
+        }
+      } else if (securityAnswer) {
+        if (!user.securityAnswerHash || !verifyPassword(securityAnswer.toLowerCase().trim(), user.securityAnswerHash)) {
+          return res.status(401).json({ success: false, message: 'Incorrect security answer' });
+        }
+      } else if (user.twoFactorType === 'security_question' && !securityAnswer) {
+         return res.status(200).json({ 
+          success: false, 
+          requiresTwoFactor: true, 
+          twoFactorType: 'security_question',
+          question: user.securityQuestion,
+          message: 'Security question required' 
+        });
       }
-      // Security question login logic can be added here if needed
     }
 
     const accessToken = jwt.sign({ id: user.email }, process.env.JWT_SECRET, { expiresIn: '15m' });
