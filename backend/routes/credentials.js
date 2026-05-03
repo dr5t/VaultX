@@ -51,8 +51,9 @@ router.post('/', async (req, res) => {
   try {
     const db = req.db;
     const { siteName, url, username, password, category, notes } = req.body;
-
+    console.log('👉 Encrypting for user:', req.user?.id);
     const encryptedPassword = encrypt(password, req.user.id);
+    console.log('✅ Encryption successful');
 
     const credRef = await db.collection('credentials').add({
       userId: req.user.id,
