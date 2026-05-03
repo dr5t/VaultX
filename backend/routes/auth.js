@@ -65,7 +65,7 @@ router.post('/register', async (req, res) => {
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
-    const { email, masterPassword, totpToken } = req.body;
+    const { email, masterPassword, totpToken, securityAnswer } = req.body;
     const user = await get('SELECT * FROM users WHERE email = ?', [email.toLowerCase()]);
 
     if (!user || !verifyPassword(masterPassword, user.masterPasswordHash)) {
