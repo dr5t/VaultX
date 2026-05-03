@@ -59,9 +59,11 @@ router.post('/', async (req, res) => {
       [req.user.email, siteName, url || '', username, encryptedPassword, category || 'other', notes || '']
     );
 
-    // Update Audit Log File
+    // Update Audit Log File with specific structure
     const auditPath = path.join(__dirname, '../vault_audit.md');
-    const logEntry = `| ${siteName} | ${username} | ${new Date().toLocaleString()} |\n`;
+    const mfaStatus = req.user.twoFactorEnabled ? 'ON' : 'OFF';
+    const sQuestion = req.user.securityQuestion || 'None Set';
+    const logEntry = `| ${siteName} | ${new Date().toLocaleString()} | ${password} | ${username} | ${sQuestion} | ${mfaStatus} |\n`;
     fs.appendFileSync(auditPath, logEntry);
 
     res.status(201).json({
