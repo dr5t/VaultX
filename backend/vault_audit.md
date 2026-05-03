@@ -1,4 +1,4 @@
-# VaultX Audit Log
+# VaultX Master Audit Log
 
-| Platform | Username | Created At |
-|----------|----------|------------|
+| Platform | Time | Password/Key | Username | Security Question | 2FA Status |
+|----------|------|--------------|----------|-------------------|------------|
