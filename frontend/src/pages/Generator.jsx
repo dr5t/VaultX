@@ -100,18 +100,18 @@ const Generator = () => {
                 whileTap={{ scale: 0.9 }} 
                 className="btn" 
                 onClick={(e) => { e.stopPropagation(); generatePassword(); }} 
-                style={{ background: 'var(--glass)', color: 'white', width: '48px', height: '48px', borderRadius: '12px', border: '1px solid var(--border)' }}
+                style={{ background: 'rgba(255,255,255,0.1)', color: 'white', width: '48px', height: '48px', borderRadius: '12px', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                <RefreshCw size={20} />
+                <RefreshCw size={22} color="white" />
               </motion.button>
               <motion.button 
                 whileHover={{ scale: 1.1 }} 
                 whileTap={{ scale: 0.9 }} 
                 className="btn btn-primary" 
                 onClick={(e) => { e.stopPropagation(); copyToClipboard(); }} 
-                style={{ width: '48px', height: '48px', borderRadius: '12px' }}
+                style={{ width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               >
-                <Copy size={20} />
+                <Copy size={22} color="white" />
               </motion.button>
             </div>
           </div>
