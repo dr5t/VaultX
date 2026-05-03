@@ -79,6 +79,7 @@ router.post('/', async (req, res) => {
       }
     });
   } catch (err) {
+    console.error('Add Credential Error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
