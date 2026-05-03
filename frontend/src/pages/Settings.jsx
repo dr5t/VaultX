@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { Shield, Key, Mail, Smartphone, AlertCircle, LogOut, ChevronRight } from 'lucide-react';
+import { Shield, Key, Mail, Smartphone, AlertCircle, LogOut } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -13,10 +13,17 @@ const Settings = () => {
   const [showSetup, setShowSetup] = useState(false);
   const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5001' : '';
 
+  const getAuthHeaders = () => {
+    const token = localStorage.getItem('accessToken');
+    return { Authorization: `Bearer ${token}` };
+  };
+
   const setup2FA = async () => {
     setLoading(true);
     try {
-      const res = await axios.post(`${API_BASE}/api/auth/2fa/setup`);
+      const res = await axios.post(`${API_BASE}/api/auth/2fa/setup`, {}, {
+        headers: getAuthHeaders()
+      });
       if (res.data.success) {
         setTwoFactorData(res.data);
         setShowSetup(true);
@@ -29,12 +36,19 @@ const Settings = () => {
   };
 
   const verify2FA = async () => {
+    if (!totpToken || totpToken.length < 6) {
+      toast.error('Please enter a valid 6-digit code');
+      return;
+    }
     setLoading(true);
     try {
-      const res = await axios.post(`${API_BASE}/api/auth/2fa/verify`, { token: totpToken });
+      const res = await axios.post(`${API_BASE}/api/auth/2fa/verify`, { token: totpToken }, {
+        headers: getAuthHeaders()
+      });
       if (res.data.success) {
         toast.success('2FA enabled successfully!');
         setShowSetup(false);
+        // Refresh auth state to update UI
         window.location.reload(); 
       }
     } catch (err) {
@@ -50,7 +64,9 @@ const Settings = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post(`${API_BASE}/api/auth/2fa/disable`, { masterPassword: password });
+      const res = await axios.post(`${API_BASE}/api/auth/2fa/disable`, { masterPassword: password }, {
+        headers: getAuthHeaders()
+      });
       if (res.data.success) {
         toast.success('2FA has been disabled');
         window.location.reload();
@@ -94,7 +110,7 @@ const Settings = () => {
             whileTap={{ scale: 0.98 }}
             className="btn" 
             onClick={logout} 
-            style={{ width: '100%', marginTop: '20px', background: 'rgba(239, 68, 68, 0.05)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.1)' }}
+            style={{ width: '100%', marginTop: '20px', background: 'rgba(239, 68, 68, 0.05)', color: '#ef4444', border: '1px solid rgba(239, 68, 68, 0.1)' }}
           >
             <LogOut size={18} /> Terminate All Sessions
           </motion.button>
@@ -103,16 +119,16 @@ const Settings = () => {
         {/* 2FA Control */}
         <motion.div whileHover={{ translateY: -5 }} className="glass-card" style={{ padding: '40px' }}>
           <div className="flex align-center gap-15 mb-30">
-            <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--accent)', borderRadius: '14px' }}>
+            <div style={{ padding: '12px', background: 'rgba(16, 185, 129, 0.1)', color: 'var(--secondary)', borderRadius: '14px' }}>
               <Smartphone size={24} />
             </div>
             <h3 style={{ fontSize: '1.4rem' }}>Multi-Factor Auth</h3>
           </div>
 
-          <div style={{ padding: '24px', background: 'rgba(0,0,0,0.2)', borderRadius: '20px', border: '1px solid var(--glass-border)' }}>
+          <div style={{ padding: '24px', background: 'rgba(0,0,0,0.2)', borderRadius: '20px', border: '1px solid var(--border)' }}>
             <div className="flex align-center justify-between">
               <div>
-                <p style={{ fontWeight: '700', color: user?.twoFactorEnabled ? 'var(--accent)' : 'white' }}>
+                <p style={{ fontWeight: '700', color: user?.twoFactorEnabled ? 'var(--secondary)' : 'white' }}>
                   {user?.twoFactorEnabled ? 'PROTECTED' : 'UNPROTECTED'}
                 </p>
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px' }}>
@@ -120,7 +136,7 @@ const Settings = () => {
                 </p>
               </div>
               {user?.twoFactorEnabled ? (
-                <button className="btn" onClick={disable2FA} style={{ background: 'transparent', color: 'var(--danger)', fontWeight: '700' }}>Disable</button>
+                <button className="btn" onClick={disable2FA} style={{ background: 'transparent', color: '#ef4444', fontWeight: '700' }}>Disable</button>
               ) : (
                 !showSetup && <button className="btn btn-primary" onClick={setup2FA} style={{ padding: '8px 20px' }}>Setup</button>
               )}
