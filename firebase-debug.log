@@ -1,0 +1,22 @@
+[debug] [2026-05-03T11:28:10.800Z] ----------------------------------------------------------------------
+[debug] [2026-05-03T11:28:10.807Z] Command:       /Users/shauryatiwari/.nvm/versions/node/v25.2.1/bin/node /Users/shauryatiwari/.nvm/versions/node/v25.2.1/bin/firebase deploy --non-interactive
+[debug] [2026-05-03T11:28:10.807Z] CLI Version:   15.14.0
+[debug] [2026-05-03T11:28:10.807Z] Platform:      darwin
+[debug] [2026-05-03T11:28:10.807Z] Node Version:  v25.2.1
+[debug] [2026-05-03T11:28:10.807Z] Time:          Sun May 03 2026 16:58:10 GMT+0530 (India Standard Time)
+[debug] [2026-05-03T11:28:10.807Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2026-05-03T11:28:11.894Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-05-03T11:28:11.894Z] > authorizing via signed-in user (tiwarishaurya395@gmail.com)
+[debug] [2026-05-03T11:28:11.894Z] [iam] checking project vaultx-69534 for permissions ["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get","firebasehosting.sites.update"]
+[debug] [2026-05-03T11:28:11.895Z] Checked if tokens are valid: true, expires at: 1777811147877
+[debug] [2026-05-03T11:28:11.895Z] Checked if tokens are valid: true, expires at: 1777811147877
+[debug] [2026-05-03T11:28:11.896Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/vaultx-69534:testIamPermissions [none]
+[debug] [2026-05-03T11:28:11.896Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/vaultx-69534:testIamPermissions  x-goog-user-project=vaultx-69534
+[debug] [2026-05-03T11:28:11.896Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/vaultx-69534:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-05-03T11:28:13.666Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/vaultx-69534:testIamPermissions 200
+[debug] [2026-05-03T11:28:13.666Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/vaultx-69534:testIamPermissions {"permissions":["cloudfunctions.functions.create","cloudfunctions.functions.delete","cloudfunctions.functions.get","cloudfunctions.functions.list","cloudfunctions.functions.update","cloudfunctions.operations.get","firebase.projects.get","firebasehosting.sites.update"]}
+[debug] [2026-05-03T11:28:13.666Z] Checked if tokens are valid: true, expires at: 1777811147877
+[debug] [2026-05-03T11:28:13.666Z] Checked if tokens are valid: true, expires at: 1777811147877
+[debug] [2026-05-03T11:28:13.667Z] >>> [apiv2][query] POST https://iam.googleapis.com/v1/projects/vaultx-69534/serviceAccounts/vaultx-69534@appspot.gserviceaccount.com:testIamPermissions [none]
+[debug] [2026-05-03T11:28:13.667Z] >>> [apiv2][body] POST https://iam.googleapis.com/v1/projects/vaultx-69534/serviceAccounts/vaultx-69534@appspot.gserviceaccount.com:testIamPermissions {"permissions":["iam.serviceAccounts.actAs"]}
