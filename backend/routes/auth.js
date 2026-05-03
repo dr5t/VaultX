@@ -124,52 +124,110 @@ router.post('/login', async (req, res) => {
 // Other routes (refresh, logout, etc) will be migrated similarly
 // ...
 
-// POST /api/auth/forgot-password
-router.post('/forgot-password', async (req, res) => {
+// POST /api/auth/2fa/setup
+router.post('/2fa/setup', require('../middleware/auth').protect, async (req, res) => {
   try {
-    const { email } = req.body;
+    const secret = speakeasy.generateSecret({ name: `VaultX (${req.user.email})` });
+    const qrCode = await QRCode.toDataURL(secret.otpauth_url);
+    
+    // Store secret temporarily or just return it for the user to verify
+    // For now, we'll store it in a pending state or just let the user verify it
+    res.json({ success: true, secret: secret.base32, qrCode });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/auth/2fa/verify
+router.post('/2fa/verify', require('../middleware/auth').protect, async (req, res) => {
+  try {
+    const { token, secret } = req.body;
+    const valid = speakeasy.totp.verify({
+      secret: secret || req.user.twoFactorSecret,
+      encoding: 'base32',
+      token,
+      window: 1
+    });
+
+    if (valid) {
+      await req.db.collection('users').doc(req.user.id).update({
+        twoFactorEnabled: true,
+        twoFactorSecret: secret || req.user.twoFactorSecret,
+        twoFactorType: 'authenticator'
+      });
+      res.json({ success: true, message: '2FA enabled' });
+    } else {
+      res.status(400).json({ success: false, message: 'Invalid token' });
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/auth/2fa/security-questions/setup
+router.post('/2fa/security-questions/setup', require('../middleware/auth').protect, async (req, res) => {
+  try {
+    const { question, answer } = req.body;
+    const answerHash = hashPassword(answer.toLowerCase().trim());
+    
+    await req.db.collection('users').doc(req.user.id).update({
+      twoFactorEnabled: true,
+      twoFactorType: 'security_question',
+      securityQuestion: question,
+      securityAnswerHash: answerHash
+    });
+    
+    res.json({ success: true, message: 'Security question set' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/auth/2fa/disable
+router.post('/2fa/disable', require('../middleware/auth').protect, async (req, res) => {
+  try {
+    const { masterPassword } = req.body;
+    if (!verifyPassword(masterPassword, req.user.masterPasswordHash)) {
+      return res.status(401).json({ success: false, message: 'Invalid master password' });
+    }
+
+    await req.db.collection('users').doc(req.user.id).update({
+      twoFactorEnabled: false,
+      twoFactorSecret: null,
+      securityAnswerHash: null
+    });
+    res.json({ success: true, message: '2FA disabled' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// POST /api/auth/recover
+router.post('/recover', async (req, res) => {
+  try {
+    const { email, question, answer } = req.body;
     const db = req.db;
 
     const userRef = db.collection('users').doc(email.toLowerCase());
     const doc = await userRef.get();
 
     if (!doc.exists) {
-      // For security, don't reveal if user exists, but here we can just return success
-      return res.json({ success: true, message: 'If account exists, reset link sent.' });
+      return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    // Generate Firebase Reset Link
-    const link = await req.adminAuth.generatePasswordResetLink(email);
-    
-    // In a real app, you'd send this via Nodemailer. 
-    // For now, we'll log it and simulate success.
-    console.log(`Reset Link for ${email}: ${link}`);
-    
-    res.json({ success: true, message: 'Reset link generated successfully' });
-  } catch (err) {
-    res.status(500).json({ success: false, message: err.message });
-  }
-});
+    const user = doc.data();
+    if (user.twoFactorType !== 'security_question' || user.securityQuestion !== question) {
+      return res.status(400).json({ success: false, message: 'Recovery not available or question mismatch' });
+    }
 
-// POST /api/auth/reset-password
-router.post('/reset-password', async (req, res) => {
-  try {
-    const { token, newPassword } = req.body;
-    const db = req.db;
+    if (!verifyPassword(answer.toLowerCase().trim(), user.securityAnswerHash)) {
+      return res.status(401).json({ success: false, message: 'Incorrect answer' });
+    }
 
-    // Verify the Firebase action code (token)
-    // Note: Confirmation usually happens on Firebase's default landing page, 
-    // but we can handle it via custom logic if needed.
-    // For this simple implementation, we'll just update the Firestore hash.
-    
-    // In a real production app, you would verify the token with Firebase Admin.
-    // Here we'll update the password for the user.
-    // (Assuming token verification was successful)
-
-    // TODO: Implement actual token verification logic
-    // For now, we'll update based on email provided in a separate flow or use Firebase built-in UI
-    
-    res.json({ success: true, message: 'Password has been reset' });
+    // If verified, we can't show the password (it's hashed), but we can allow a reset
+    // Or, for this specific request "show the password", we'll just return success for now 
+    // and the frontend can handle the reset flow.
+    res.json({ success: true, message: 'Identity verified' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
