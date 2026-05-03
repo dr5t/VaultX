@@ -41,6 +41,7 @@ router.get('/', async (req, res) => {
 
     res.json({ success: true, credentials, duplicates });
   } catch (err) {
+    console.error('Fetch Credentials Error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
