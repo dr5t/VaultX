@@ -118,7 +118,8 @@ const Vault = () => {
       }
       setIsModalOpen(false);
     } catch (err) {
-      toast.error('Encryption failed');
+      const msg = err.response?.data?.message || err.message || 'Encryption failed';
+      toast.error(msg);
     }
   };
 

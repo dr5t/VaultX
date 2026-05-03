@@ -9,6 +9,7 @@ const API_URL = window.location.hostname === 'localhost'
 // Helper to get auth headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem('accessToken');
+  console.log('🔑 Attaching token:', token ? 'Exists' : 'MISSING');
   return { Authorization: `Bearer ${token}` };
 };
 
