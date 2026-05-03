@@ -1,6 +1,7 @@
 const express = require('express');
 const { protect } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../utils/encryption');
+const { get, run, query } = require('../db/database');
 
 const router = express.Router();
 router.use(protect);
@@ -8,26 +9,22 @@ router.use(protect);
 // GET /api/credentials
 router.get('/', async (req, res) => {
   try {
-    const db = req.db;
     const { category } = req.query;
-    
-    let query = db.collection('credentials').where('userId', '==', req.user.id);
-    
+    let sql = 'SELECT * FROM credentials WHERE userId = ?';
+    let params = [req.user.email];
+
     if (category && category !== 'all') {
-      query = query.where('category', '==', category);
+      sql += ' AND category = ?';
+      params.push(category);
     }
 
-    const snapshot = await query.get();
-    const credentials = [];
+    const rows = await query(sql, params);
     
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      credentials.push({
-        _id: doc.id,
-        ...data,
-        password: decrypt(data.encryptedPassword, req.user.id)
-      });
-    });
+    const credentials = rows.map(row => ({
+      _id: row.id,
+      ...row,
+      password: decrypt(row.encryptedPassword, req.user.email)
+    }));
 
     // Duplicate detection
     const usernameMap = {};
@@ -49,28 +46,21 @@ router.get('/', async (req, res) => {
 // POST /api/credentials
 router.post('/', async (req, res) => {
   try {
-    const db = req.db;
     const { siteName, url, username, password, category, notes } = req.body;
-    console.log('👉 Encrypting for user:', req.user?.id);
-    const encryptedPassword = encrypt(password, req.user.id);
-    console.log('✅ Encryption successful');
-
-    const credRef = await db.collection('credentials').add({
-      userId: req.user.id,
-      siteName,
-      url: url || '',
-      username,
-      encryptedPassword,
-      category: category || 'other',
-      notes: notes || '',
-      lastAccessed: new Date().toISOString(),
-      createdAt: new Date().toISOString()
-    });
+    console.log('👉 Encrypting for user:', req.user?.email);
+    
+    const encryptedPassword = encrypt(password, req.user.email);
+    
+    const result = await run(
+      `INSERT INTO credentials (userId, siteName, url, username, encryptedPassword, category, notes) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [req.user.email, siteName, url || '', username, encryptedPassword, category || 'other', notes || '']
+    );
 
     res.status(201).json({
       success: true,
       credential: {
-        _id: credRef.id,
+        _id: result.id,
         siteName,
         url,
         username,
@@ -85,7 +75,35 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Other CRUD methods (PUT, DELETE) will follow the same pattern
-// ...
+// PUT /api/credentials/:id
+router.put('/:id', async (req, res) => {
+  try {
+    const { siteName, url, username, password, category, notes } = req.body;
+    const encryptedPassword = encrypt(password, req.user.email);
+
+    await run(
+      `UPDATE credentials SET siteName = ?, url = ?, username = ?, encryptedPassword = ?, category = ?, notes = ?, lastAccessed = CURRENT_TIMESTAMP 
+       WHERE id = ? AND userId = ?`,
+      [siteName, url, username, encryptedPassword, category, notes, req.params.id, req.user.email]
+    );
+
+    res.json({
+      success: true,
+      credential: { _id: req.params.id, siteName, url, username, password, category, notes }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// DELETE /api/credentials/:id
+router.delete('/:id', async (req, res) => {
+  try {
+    await run('DELETE FROM credentials WHERE id = ? AND userId = ?', [req.params.id, req.user.email]);
+    res.json({ success: true, message: 'Credential deleted' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 module.exports = router;
