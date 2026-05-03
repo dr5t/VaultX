@@ -22,11 +22,10 @@ export const AuthProvider = ({ children }) => {
 
   const checkLoggedIn = async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('accessToken');
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        // Verify token with health check or user profile endpoint
-        // For simplicity, we just assume it's valid if present
+        // Verify token with profile endpoint
         const savedUser = JSON.parse(localStorage.getItem('user'));
         setUser(savedUser);
       }
@@ -58,7 +57,7 @@ export const AuthProvider = ({ children }) => {
   };
 
   const handleAuthSuccess = (data) => {
-    localStorage.setItem('token', data.accessToken);
+    localStorage.setItem('accessToken', data.accessToken);
     localStorage.setItem('user', JSON.stringify(data.user));
     axios.defaults.headers.common['Authorization'] = `Bearer ${data.accessToken}`;
     setUser(data.user);
@@ -70,7 +69,7 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.error('Logout error', err);
     } finally {
-      localStorage.removeItem('token');
+      localStorage.removeItem('accessToken');
       localStorage.removeItem('user');
       delete axios.defaults.headers.common['Authorization'];
       setUser(null);
