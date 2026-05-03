@@ -2,6 +2,8 @@ const express = require('express');
 const { protect } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../utils/encryption');
 const { get, run, query } = require('../db/database');
+const fs = require('fs');
+const path = require('path');
 
 const router = express.Router();
 router.use(protect);
@@ -56,6 +58,11 @@ router.post('/', async (req, res) => {
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [req.user.email, siteName, url || '', username, encryptedPassword, category || 'other', notes || '']
     );
+
+    // Update Audit Log File
+    const auditPath = path.join(__dirname, '../vault_audit.md');
+    const logEntry = `| ${siteName} | ${username} | ${new Date().toLocaleString()} |\n`;
+    fs.appendFileSync(auditPath, logEntry);
 
     res.status(201).json({
       success: true,
