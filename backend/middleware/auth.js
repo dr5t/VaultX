@@ -22,8 +22,11 @@ const protect = async (req, res, next) => {
     req.user.id = user.email; // Alias for compatibility
     next();
   } catch (err) {
-    console.error('Auth Middleware Error:', err.message);
-    return res.status(401).json({ success: false, message: 'Invalid or expired token' });
+    console.error('❌ Auth Middleware Token Failure:', err.name, err.message);
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ success: false, message: 'Session expired. Please log in again.' });
+    }
+    return res.status(401).json({ success: false, message: `Auth Error: ${err.message}` });
   }
 };
 
