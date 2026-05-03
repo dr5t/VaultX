@@ -75,7 +75,7 @@ const Generator = () => {
 
       <div style={{ maxWidth: '700px', margin: '0 auto' }}>
         <motion.div className="glass-card" style={{ padding: '40px', marginBottom: '30px' }}>
-          <div style={{ position: 'relative', marginBottom: '30px' }}>
+          <div style={{ position: 'relative', marginBottom: '30px', display: 'flex', alignItems: 'center' }}>
             <motion.input 
               key={password}
               initial={{ opacity: 0.5 }}
@@ -83,11 +83,36 @@ const Generator = () => {
               type="text" 
               readOnly 
               value={password}
-              style={{ fontSize: '1.4rem', textAlign: 'center', height: '80px', letterSpacing: '2px', fontWeight: 700, background: 'rgba(255,255,255,0.02)', border: '1px solid var(--glass-border)' }}
+              style={{ 
+                fontSize: '1.4rem', 
+                textAlign: 'center', 
+                height: '80px', 
+                letterSpacing: '2px', 
+                fontWeight: 700, 
+                background: 'rgba(255,255,255,0.02)', 
+                border: '1px solid var(--glass-border)',
+                paddingRight: '120px' // Make space for buttons
+              }}
             />
-            <div className="flex gap-10" style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)' }}>
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="btn" onClick={generatePassword} style={{ background: 'var(--glass)', color: 'white', width: '48px', height: '48px', borderRadius: '12px' }}><RefreshCw size={20} /></motion.button>
-              <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="btn btn-primary" onClick={copyToClipboard} style={{ width: '48px', height: '48px', borderRadius: '12px' }}><Copy size={20} /></motion.button>
+            <div className="flex gap-10" style={{ position: 'absolute', right: '15px', zIndex: 10 }}>
+              <motion.button 
+                whileHover={{ scale: 1.1 }} 
+                whileTap={{ scale: 0.9 }} 
+                className="btn" 
+                onClick={(e) => { e.stopPropagation(); generatePassword(); }} 
+                style={{ background: 'var(--glass)', color: 'white', width: '48px', height: '48px', borderRadius: '12px', border: '1px solid var(--border)' }}
+              >
+                <RefreshCw size={20} />
+              </motion.button>
+              <motion.button 
+                whileHover={{ scale: 1.1 }} 
+                whileTap={{ scale: 0.9 }} 
+                className="btn btn-primary" 
+                onClick={(e) => { e.stopPropagation(); copyToClipboard(); }} 
+                style={{ width: '48px', height: '48px', borderRadius: '12px' }}
+              >
+                <Copy size={20} />
+              </motion.button>
             </div>
           </div>
 
@@ -97,7 +122,7 @@ const Generator = () => {
             </div>
             <input 
               type="range" min="8" max="64" value={length}
-              onChange={(e) => setLength(e.target.value)}
+              onChange={(e) => setLength(parseInt(e.target.value))}
               style={{ padding: 0, height: '6px', background: 'var(--glass)', accentColor: 'var(--primary)' }}
             />
           </div>
@@ -110,7 +135,7 @@ const Generator = () => {
                 onClick={() => setOptions({...options, [key]: !options[key]})}
                 style={{ 
                   padding: '16px', borderRadius: '16px', border: '1px solid var(--border)', 
-                  display: 'flex', alignItems: 'center', justifyContent: 'between', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer',
                   transition: 'var(--transition)',
                   background: options[key] ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
                   borderColor: options[key] ? 'var(--primary)' : 'var(--border)'
