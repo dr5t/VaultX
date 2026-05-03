@@ -1,91 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useVault } from '../context/VaultContext';
-import { Plus, Search, Copy, Eye, EyeOff, Edit2, Trash2, Globe, Lock, ExternalLink, X } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { Plus, Search, Copy, Eye, EyeOff, Edit2, Trash2, Globe, Lock, X, User } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const CredentialCard = ({ credential, onEdit, onDelete, index }) => {
-  const [showPassword, setShowPassword] = useState(false);
-
-  const copyToClipboard = (text, type) => {
-    navigator.clipboard.writeText(text);
-    toast.success(`${type} copied to clipboard`);
-  };
-
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05 }}
-      whileHover={{ translateY: -5 }}
-      className="glass-card" 
-      style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}
-    >
-      <div className="flex align-center justify-between">
-        <div className="flex align-center gap-12">
-          <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'var(--glass)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--glass-border)' }}>
-            <Globe size={22} color="var(--primary)" />
-          </div>
-          <div>
-            <h4 style={{ fontSize: '1.1rem', fontWeight: 700 }}>{credential.siteName}</h4>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              {credential.url ? (
-                <a href={credential.url} target="_blank" rel="noopener noreferrer" style={{ color: 'inherit', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  {credential.url.replace('https://', '').replace('http://', '').split('/')[0]} <ExternalLink size={12} />
-                </a>
-              ) : 'No URL'}
-            </p>
-          </div>
-        </div>
-        <div className="flex gap-8">
-          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="btn" onClick={() => onEdit(credential)} style={{ padding: '8px', background: 'var(--glass)', color: 'var(--text-main)' }}><Edit2 size={14} /></motion.button>
-          <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="btn" onClick={() => onDelete(credential._id)} style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }}><Trash2 size={14} /></motion.button>
-        </div>
-      </div>
-
-      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '14px', border: '1px solid var(--glass-border)' }}>
-        <div className="flex align-center justify-between mb-8">
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Username</span>
-          <button className="btn" onClick={() => copyToClipboard(credential.username, 'Username')} style={{ padding: '4px', background: 'transparent', color: 'var(--primary)' }}><Copy size={14} /></button>
-        </div>
-        <p style={{ fontSize: '1rem', fontWeight: '500' }}>{credential.username}</p>
-      </div>
-
-      <div style={{ background: 'rgba(0,0,0,0.2)', padding: '16px', borderRadius: '14px', border: '1px solid var(--glass-border)' }}>
-        <div className="flex align-center justify-between mb-8">
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>Password</span>
-          <div className="flex gap-10">
-            <button className="btn" onClick={() => setShowPassword(!showPassword)} style={{ padding: '4px', background: 'transparent', color: 'var(--text-muted)' }}>
-              {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-            </button>
-            <button className="btn" onClick={() => copyToClipboard(credential.password, 'Password')} style={{ padding: '4px', background: 'transparent', color: 'var(--primary)' }}><Copy size={14} /></button>
-          </div>
-        </div>
-        <p style={{ fontSize: '1rem', fontWeight: '500', letterSpacing: showPassword ? 'normal' : '4px' }}>
-          {showPassword ? credential.password : '••••••••••••'}
-        </p>
-      </div>
-
-      <div className="flex align-center gap-8">
-        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', padding: '5px 12px', borderRadius: '20px', border: '1px solid rgba(99, 102, 241, 0.2)', textTransform: 'capitalize' }}>
-          {credential.category || 'Other'}
-        </span>
-        {credential.isDuplicate && (
-          <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--warning)', background: 'rgba(245, 158, 11, 0.1)', padding: '5px 12px', borderRadius: '20px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-            Duplicate Identity
-          </span>
-        )}
-      </div>
-    </motion.div>
-  );
-};
-
 const Vault = () => {
+  const { user } = useAuth();
   const { credentials, duplicates, fetchCredentials, addCredential, updateCredential, deleteCredential, loading } = useVault();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCred, setEditingCred] = useState(null);
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
+  const [showAllPasswords, setShowAllPasswords] = useState({});
 
   const [formData, setFormData] = useState({
     siteName: '', url: '', username: '', password: '', category: 'other', notes: ''
@@ -95,10 +22,15 @@ const Vault = () => {
     fetchCredentials();
   }, [fetchCredentials]);
 
+  const copyToClipboard = (text, type) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${type} copied to clipboard`);
+  };
+
   const handleOpenModal = (cred = null) => {
     if (cred) {
       setEditingCred(cred);
-      setFormData({ siteName: cred.siteName, url: cred.url, username: cred.username, password: cred.password, category: cred.category, notes: cred.notes || '' });
+      setFormData({ siteName: cred.siteName, url: cred.url || '', username: cred.username, password: cred.password, category: cred.category, notes: cred.notes || '' });
     } else {
       setEditingCred(null);
       setFormData({ siteName: '', url: '', username: '', password: '', category: 'other', notes: '' });
@@ -118,28 +50,29 @@ const Vault = () => {
       }
       setIsModalOpen(false);
     } catch (err) {
-      const msg = err.response?.data?.message || err.message || 'Encryption failed';
+      const msg = err.response?.data?.message || err.message || 'Error occurred';
       toast.error(msg);
     }
+  };
+
+  const togglePassword = (id) => {
+    setShowAllPasswords(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
   const filteredCredentials = credentials.filter(c => {
     const matchesSearch = c.siteName.toLowerCase().includes(search.toLowerCase()) || c.username.toLowerCase().includes(search.toLowerCase());
     const matchesFilter = filter === 'all' || c.category === filter;
     return matchesSearch && matchesFilter;
-  }).map(c => ({
-    ...c,
-    isDuplicate: duplicates.some(d => d.username === c.username)
-  }));
+  });
 
-  const categories = ['all', 'social', 'education', 'banking', 'work', 'custom', 'other'];
+  const categories = ['all', 'social', 'education', 'banking', 'work', 'other'];
 
   return (
     <div className="container" style={{ paddingTop: '20px' }}>
       <header className="flex align-center justify-between" style={{ marginBottom: '40px' }}>
         <div>
           <h1 className="text-gradient" style={{ fontSize: '2.5rem' }}>Secure Vault</h1>
-          <p style={{ color: 'var(--text-muted)' }}>{credentials.length} items currently encrypted.</p>
+          <p style={{ color: 'var(--text-muted)' }}>{credentials.length} local records managed by SQL.</p>
         </div>
         <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="btn btn-primary" onClick={() => handleOpenModal()}>
           <Plus size={20} /> <span style={{ marginLeft: '4px' }}>New Credential</span>
@@ -151,7 +84,7 @@ const Vault = () => {
           <Search size={20} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
           <input 
             type="text" 
-            placeholder="Find a credential..." 
+            placeholder="Search by platform or username..." 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ paddingLeft: '48px', height: '54px' }}
@@ -159,11 +92,10 @@ const Vault = () => {
         </div>
         <div style={{ display: 'flex', gap: '10px' }}>
           {categories.map(cat => (
-            <motion.button 
+            <button 
               key={cat}
               onClick={() => setFilter(cat)}
-              className="btn"
-              whileHover={{ scale: 1.05 }}
+              className={`btn ${filter === cat ? 'btn-primary' : ''}`}
               style={{ 
                 background: filter === cat ? 'var(--primary)' : 'var(--glass)',
                 color: filter === cat ? 'white' : 'var(--text-muted)',
@@ -174,44 +106,75 @@ const Vault = () => {
               }}
             >
               {cat}
-            </motion.button>
+            </button>
           ))}
         </div>
       </div>
 
-      <AnimatePresence mode="popLayout">
-        {loading ? (
-          <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>Syncing with cloud...</motion.p>
-        ) : filteredCredentials.length > 0 ? (
-          <motion.div 
-            layout
-            style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '24px' }}
-          >
-            {filteredCredentials.map((cred, i) => (
-              <CredentialCard 
-                key={cred._id} 
-                index={i}
-                credential={cred} 
-                onEdit={handleOpenModal} 
-                onDelete={deleteCredential}
-              />
-            ))}
-          </motion.div>
-        ) : (
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="glass-card" style={{ padding: '80px', textAlign: 'center' }}>
-            <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.02)', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Lock size={40} style={{ color: 'var(--text-muted)' }} />
-            </div>
-            <h3 style={{ fontSize: '1.5rem' }}>No credentials found</h3>
-            <p style={{ color: 'var(--text-muted)', marginTop: '10px' }}>Start your journey by securing your first account.</p>
-            <button className="btn btn-primary" style={{ marginTop: '30px' }} onClick={() => handleOpenModal()}>
-              Add Now
-            </button>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <div className="glass-card" style={{ overflow: 'hidden' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <thead>
+            <tr style={{ borderBottom: '1px solid var(--glass-border)', background: 'rgba(255,255,255,0.02)' }}>
+              <th style={{ padding: '20px', color: 'var(--text-muted)', fontWeight: 600 }}>PLATFORM</th>
+              <th style={{ padding: '20px', color: 'var(--text-muted)', fontWeight: 600 }}>WHO CREATED</th>
+              <th style={{ padding: '20px', color: 'var(--text-muted)', fontWeight: 600 }}>CATEGORY</th>
+              <th style={{ padding: '20px', color: 'var(--text-muted)', fontWeight: 600 }}>KEY</th>
+              <th style={{ padding: '20px', color: 'var(--text-muted)', fontWeight: 600, textAlign: 'right' }}>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredCredentials.length > 0 ? (
+              filteredCredentials.map((cred) => (
+                <tr key={cred._id} style={{ borderBottom: '1px solid var(--glass-border)', transition: 'background 0.3s' }}>
+                  <td style={{ padding: '20px' }}>
+                    <div className="flex align-center gap-12">
+                      <div style={{ width: '32px', height: '32px', borderRadius: '8px', background: 'var(--glass)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <Globe size={16} color="var(--primary)" />
+                      </div>
+                      <span style={{ fontWeight: 600 }}>{cred.siteName}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '20px' }}>
+                    <div className="flex align-center gap-8" style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                      <User size={14} /> {cred.userId || user?.email}
+                    </div>
+                  </td>
+                  <td style={{ padding: '20px' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.1)', padding: '4px 10px', borderRadius: '12px', textTransform: 'capitalize' }}>
+                      {cred.category}
+                    </span>
+                  </td>
+                  <td style={{ padding: '20px' }}>
+                    <div className="flex align-center gap-10">
+                      <span style={{ fontFamily: 'monospace', fontSize: '1rem', letterSpacing: showAllPasswords[cred._id] ? 'normal' : '3px' }}>
+                        {showAllPasswords[cred._id] ? cred.password : '••••••••'}
+                      </span>
+                      <button className="btn" onClick={() => togglePassword(cred._id)} style={{ padding: '4px', background: 'transparent', color: 'var(--text-muted)' }}>
+                        {showAllPasswords[cred._id] ? <EyeOff size={14} /> : <Eye size={14} />}
+                      </button>
+                      <button className="btn" onClick={() => copyToClipboard(cred.password, 'Password')} style={{ padding: '4px', background: 'transparent', color: 'var(--primary)' }}><Copy size={14} /></button>
+                    </div>
+                  </td>
+                  <td style={{ padding: '20px', textAlign: 'right' }}>
+                    <div className="flex gap-8 justify-end">
+                      <button className="btn" onClick={() => handleOpenModal(cred)} style={{ padding: '8px', background: 'var(--glass)' }}><Edit2 size={14} /></button>
+                      <button className="btn" onClick={() => deleteCredential(cred._id)} style={{ padding: '8px', background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)' }}><Trash2 size={14} /></button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" style={{ padding: '60px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                  No credentials found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Ultra-Premium Modal */}
+      {/* Modal */}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div 
