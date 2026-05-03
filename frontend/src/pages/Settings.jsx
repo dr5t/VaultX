@@ -48,8 +48,9 @@ const Settings = () => {
     }
     setLoading(true);
     try {
+      const cleanToken = totpToken.replace(/\s/g, '');
       const res = await axios.post(`${API_BASE}/api/auth/2fa/verify`, { 
-        token: totpToken,
+        token: cleanToken,
         secret: twoFactorData.secret 
       }, {
         headers: getAuthHeaders()

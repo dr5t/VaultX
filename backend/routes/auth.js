@@ -165,8 +165,10 @@ router.post('/2fa/verify', protect, async (req, res) => {
       secret: secret || req.user.twoFactorSecret,
       encoding: 'base32',
       token,
-      window: 1
+      window: 2 // Increased window for sync issues
     });
+
+    console.log(`🔍 TOTP Verification: Token=${token}, Valid=${valid}`);
 
     if (valid) {
       await run(
@@ -178,6 +180,7 @@ router.post('/2fa/verify', protect, async (req, res) => {
       res.status(400).json({ success: false, message: 'Invalid token' });
     }
   } catch (err) {
+    console.error('❌ TOTP Verify Error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
@@ -192,6 +195,7 @@ router.post('/2fa/security-questions/setup', protect, async (req, res) => {
     );
     res.json({ success: true, message: 'Security question set' });
   } catch (err) {
+    console.error('❌ Security Question Setup Error:', err);
     res.status(500).json({ success: false, message: err.message });
   }
 });
