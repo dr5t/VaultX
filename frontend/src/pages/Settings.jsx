@@ -15,7 +15,7 @@ const Settings = () => {
   const setup2FA = async () => {
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5001/api/auth/2fa/setup');
+      const res = await axios.post(`${API_BASE}/api/auth/2fa/setup`);
       if (res.data.success) {
         setTwoFactorData(res.data);
         setShowSetup(true);
@@ -30,7 +30,7 @@ const Settings = () => {
   const verify2FA = async () => {
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5001/api/auth/2fa/verify', { token: totpToken });
+      const res = await axios.post(`${API_BASE}/api/auth/2fa/verify`, { token: totpToken });
       if (res.data.success) {
         toast.success('2FA enabled successfully!');
         setShowSetup(false);
@@ -49,7 +49,7 @@ const Settings = () => {
 
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5001/api/auth/2fa/disable', { masterPassword: password });
+      const res = await axios.post(`${API_BASE}/api/auth/2fa/disable`, { masterPassword: password });
       if (res.data.success) {
         toast.success('2FA has been disabled');
         window.location.reload();
