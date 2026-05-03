@@ -11,6 +11,7 @@ const Settings = () => {
   const [totpToken, setTotpToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
+  const API_BASE = window.location.hostname === 'localhost' ? 'http://localhost:5001' : '';
 
   const setup2FA = async () => {
     setLoading(true);
