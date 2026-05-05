@@ -13,7 +13,6 @@ const db = new sqlite3.Database(dbPath, (err) => {
 
 function initializeTables() {
   db.serialize(() => {
-    // Users table
     db.run(`CREATE TABLE IF NOT EXISTS users (
       email TEXT PRIMARY KEY,
       masterPasswordHash TEXT NOT NULL,
@@ -26,7 +25,6 @@ function initializeTables() {
       createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
     )`);
 
-    // Credentials table
     db.run(`CREATE TABLE IF NOT EXISTS credentials (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       userId TEXT NOT NULL,
@@ -41,7 +39,6 @@ function initializeTables() {
       FOREIGN KEY (userId) REFERENCES users (email)
     )`);
 
-    // Categories table
     db.run(`CREATE TABLE IF NOT EXISTS categories (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       userId TEXT NOT NULL,
@@ -54,7 +51,6 @@ function initializeTables() {
   });
 }
 
-// Promisified query helper
 const query = (sql, params = []) => {
   return new Promise((resolve, reject) => {
     db.all(sql, params, (err, rows) => {

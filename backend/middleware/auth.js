@@ -11,7 +11,6 @@ const protect = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Query SQLite for user
     const user = await get('SELECT * FROM users WHERE email = ?', [decoded.id]);
     
     if (!user) {
@@ -19,7 +18,7 @@ const protect = async (req, res, next) => {
     }
 
     req.user = user;
-    req.user.id = user.email; // Alias for compatibility
+    req.user.id = user.email;
     next();
   } catch (err) {
     console.error('❌ Auth Middleware Token Failure:', err.name, err.message);

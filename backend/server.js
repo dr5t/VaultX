@@ -13,13 +13,11 @@ const categoryRoutes = require('./routes/categories');
 
 const app = express();
 
-// Request logging
 app.use((req, res, next) => {
   console.log(`👉 ${req.method} ${req.url}`);
   next();
 });
 
-// Security middleware
 app.use(helmet());
 app.use(
   cors({
@@ -30,16 +28,14 @@ app.use(
 app.use(express.json({ limit: '10kb' }));
 app.use(cookieParser());
 
-// Pass SQLite DB to routes
 app.use((req, res, next) => {
   req.db = db;
   next();
 });
 
-// Rate limiting
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, 
-  max: 100, // Increased for local development ease
+  max: 100,
   message: { success: false, message: 'Too many requests' },
 });
 

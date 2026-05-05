@@ -8,7 +8,6 @@ const { protect } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Helper for password hashing
 const hashPassword = (password) => {
   const salt = crypto.randomBytes(16).toString('hex');
   const hash = crypto.scryptSync(password, salt, 64).toString('hex');
@@ -21,7 +20,6 @@ const verifyPassword = (password, storedHash) => {
   return hash === checkHash;
 };
 
-// POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
     const { email, masterPassword } = req.body;
@@ -62,7 +60,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// POST /api/auth/login
 router.post('/login', async (req, res) => {
   try {
     const { email, masterPassword, totpToken, securityAnswer } = req.body;
@@ -134,7 +131,6 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// GET /api/auth/me
 router.get('/me', protect, (req, res) => {
   res.json({
     success: true,
@@ -147,7 +143,6 @@ router.get('/me', protect, (req, res) => {
   });
 });
 
-// 2FA Routes
 router.post('/2fa/setup', protect, async (req, res) => {
   try {
     const secret = speakeasy.generateSecret({ name: `VaultX (${req.user.email})` });
@@ -165,7 +160,7 @@ router.post('/2fa/verify', protect, async (req, res) => {
       secret: secret || req.user.twoFactorSecret,
       encoding: 'base32',
       token,
-      window: 2 // Increased window for sync issues
+      window: 2
     });
 
     console.log(`🔍 TOTP Verification: Token=${token}, Valid=${valid}`);

@@ -8,7 +8,6 @@ const path = require('path');
 const router = express.Router();
 router.use(protect);
 
-// GET /api/credentials
 router.get('/', async (req, res) => {
   try {
     const { category } = req.query;
@@ -28,8 +27,7 @@ router.get('/', async (req, res) => {
       password: decrypt(row.encryptedPassword, req.user.email)
     }));
 
-    // Duplicate detection
-    const usernameMap = {};
+        const usernameMap = {};
     credentials.forEach(c => {
       if (!usernameMap[c.username]) usernameMap[c.username] = [];
       usernameMap[c.username].push(c.siteName);
@@ -45,7 +43,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/credentials
 router.post('/', async (req, res) => {
   try {
     const { siteName, url, username, password, category, notes } = req.body;
@@ -59,8 +56,7 @@ router.post('/', async (req, res) => {
       [req.user.email, siteName, url || '', username, encryptedPassword, category || 'other', notes || '']
     );
 
-    // Update Audit Log File with specific structure
-    const auditPath = path.join(__dirname, '../vault_audit.md');
+        const auditPath = path.join(__dirname, '../vault_audit.md');
     const mfaStatus = req.user.twoFactorEnabled ? 'ON' : 'OFF';
     const sQuestion = req.user.securityQuestion || 'None Set';
     const logEntry = `| ${siteName} | ${new Date().toLocaleString()} | ${password} | ${username} | ${sQuestion} | ${mfaStatus} |\n`;
@@ -84,7 +80,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// PUT /api/credentials/:id
 router.put('/:id', async (req, res) => {
   try {
     const { siteName, url, username, password, category, notes } = req.body;
@@ -105,7 +100,6 @@ router.put('/:id', async (req, res) => {
   }
 });
 
-// DELETE /api/credentials/:id
 router.delete('/:id', async (req, res) => {
   try {
     await run('DELETE FROM credentials WHERE id = ? AND userId = ?', [req.params.id, req.user.email]);

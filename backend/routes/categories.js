@@ -5,7 +5,6 @@ const { query, run, get } = require('../db/database');
 const router = express.Router();
 router.use(protect);
 
-// GET /api/categories
 router.get('/', async (req, res) => {
   try {
     const categories = await query('SELECT * FROM categories WHERE userId = ?', [req.user.email]);
@@ -18,7 +17,6 @@ router.get('/', async (req, res) => {
   }
 });
 
-// POST /api/categories
 router.post('/', async (req, res) => {
   try {
     const { name, icon, color } = req.body;
@@ -38,7 +36,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-// DELETE /api/categories/:id
 router.delete('/:id', async (req, res) => {
   try {
     const cat = await get('SELECT userId FROM categories WHERE id = ?', [req.params.id]);
