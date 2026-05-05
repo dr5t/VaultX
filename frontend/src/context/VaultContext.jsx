@@ -6,7 +6,6 @@ const API_URL = window.location.hostname === 'localhost'
   ? 'http://localhost:5001/api/credentials' 
   : '/api/credentials';
 
-// Helper to get auth headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem('accessToken');
   console.log('🔑 Attaching token:', token ? 'Exists' : 'MISSING');

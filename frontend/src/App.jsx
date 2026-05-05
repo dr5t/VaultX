@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { VaultProvider } from './context/VaultContext';
 
-// Pages
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -15,7 +14,6 @@ import Vault from './pages/Vault';
 import Generator from './pages/Generator';
 import Settings from './pages/Settings';
 
-// Components
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
 import ThreeBackground from './components/ThreeBackground';

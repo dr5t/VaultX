@@ -13,7 +13,6 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [encryptionKey, setEncryptionKey] = useState(null);
 
-  // Set up axios defaults
   axios.defaults.withCredentials = true;
 
   useEffect(() => {
@@ -25,7 +24,6 @@ export const AuthProvider = ({ children }) => {
       const token = localStorage.getItem('accessToken');
       if (token) {
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        // Verify token with profile endpoint
         const savedUser = JSON.parse(localStorage.getItem('user'));
         setUser(savedUser);
       }

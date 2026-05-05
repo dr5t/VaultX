@@ -10,11 +10,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   try {
-    // 1. Get current tab URL
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (!tab) return;
 
-    // 2. Check if logged in (fetch token from storage)
     const { token } = await chrome.storage.local.get('token');
     
     if (!token) {
@@ -23,7 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    // 3. Fetch matching credentials from API
     const response = await fetch(`http://localhost:5000/api/credentials/by-url?url=${encodeURIComponent(tab.url)}`, {
       headers: {
         'Authorization': `Bearer ${token}`
@@ -73,7 +70,6 @@ async function autofill(username, password) {
   chrome.scripting.executeScript({
     target: { tabId: tab.id },
     func: (u, p) => {
-      // Very basic autofill logic
       const userField = document.querySelector('input[type="text"], input[type="email"], input[name*="user"], input[name*="email"]');
       const passField = document.querySelector('input[type="password"]');
       
@@ -89,5 +85,5 @@ async function autofill(username, password) {
     args: [username, password]
   });
   
-  window.close(); // Close popup after clicking
+  window.close();
 }
