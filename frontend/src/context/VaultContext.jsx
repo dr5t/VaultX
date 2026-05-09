@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import axios from 'axios';
+import { useAuth } from './AuthContext';
+import { encryptData, decryptData } from '../utils/crypto';
 
 const VaultContext = createContext();
 const API_URL = window.location.hostname === 'localhost' 
@@ -13,6 +15,7 @@ const getAuthHeaders = () => {
 };
 
 export const VaultProvider = ({ children }) => {
+  const { encryptionKey } = useAuth();
   const [credentials, setCredentials] = useState([]);
   const [duplicates, setDuplicates] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -25,7 +28,18 @@ export const VaultProvider = ({ children }) => {
         headers: getAuthHeaders()
       });
       if (res.data.success) {
-        setCredentials(res.data.credentials);
+        const decryptedCredentials = await Promise.all(res.data.credentials.map(async (cred) => {
+          try {
+            if (encryptionKey) {
+              const decryptedPassword = await decryptData(cred.password, encryptionKey);
+              return { ...cred, password: decryptedPassword };
+            }
+          } catch (e) {
+            console.warn('Failed to decrypt credential:', cred.siteName, e);
+          }
+          return cred;
+        }));
+        setCredentials(decryptedCredentials);
         setDuplicates(res.data.duplicates);
       }
     } catch (err) {
@@ -36,22 +50,30 @@ export const VaultProvider = ({ children }) => {
   }, []);
 
   const addCredential = async (data) => {
-    const res = await axios.post(API_URL, data, {
+    let payload = { ...data };
+    if (encryptionKey) {
+      payload.password = await encryptData(data.password, encryptionKey);
+    }
+    const res = await axios.post(API_URL, payload, {
       headers: getAuthHeaders()
     });
     if (res.data.success) {
-      setCredentials((prev) => [...prev, res.data.credential]);
+      setCredentials((prev) => [...prev, { ...res.data.credential, password: data.password }]);
     }
     return res.data;
   };
 
   const updateCredential = async (id, data) => {
-    const res = await axios.put(`${API_URL}/${id}`, data, {
+    let payload = { ...data };
+    if (encryptionKey) {
+      payload.password = await encryptData(data.password, encryptionKey);
+    }
+    const res = await axios.put(`${API_URL}/${id}`, payload, {
       headers: getAuthHeaders()
     });
     if (res.data.success) {
       setCredentials((prev) => 
-        prev.map((c) => (c._id === id ? res.data.credential : c))
+        prev.map((c) => (c._id === id ? { ...res.data.credential, password: data.password } : c))
       );
     }
     return res.data;

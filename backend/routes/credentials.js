@@ -76,9 +76,9 @@ router.get('/by-url', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { siteName, url, username, password, category, notes } = req.body;
-    console.log('👉 Encrypting for user:', req.user?.email);
+    console.log('👉 Storing encrypted blob for user:', req.user?.email);
     
-    const encryptedPassword = encrypt(password, req.user.email);
+    const encryptedPassword = password;
     
     const result = await run(
       `INSERT INTO credentials (userId, siteName, url, username, encryptedPassword, category, notes) 
@@ -111,7 +111,7 @@ router.post('/', async (req, res) => {
 router.put('/:id', async (req, res) => {
   try {
     const { siteName, url, username, password, category, notes } = req.body;
-    const encryptedPassword = encrypt(password, req.user.email);
+    const encryptedPassword = password;
 
     await run(
       `UPDATE credentials SET siteName = ?, url = ?, username = ?, encryptedPassword = ?, category = ?, notes = ?, lastAccessed = CURRENT_TIMESTAMP 
