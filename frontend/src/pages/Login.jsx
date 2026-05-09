@@ -12,7 +12,7 @@ const Login = () => {
   const [securityAnswer, setSecurityAnswer] = useState('');
   
   const [requires2FA, setRequires2FA] = useState(false);
-  const [mfaType, setMfaType] = useState('authenticator'); // 'authenticator' or 'security_question'
+  const [mfaType, setMfaType] = useState('authenticator'); 
   const [question, setQuestion] = useState('');
   const [canFallback, setCanFallback] = useState(false);
   

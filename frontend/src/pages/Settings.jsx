@@ -11,7 +11,7 @@ const Settings = () => {
   const [totpToken, setTotpToken] = useState('');
   const [loading, setLoading] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
-  const [setupType, setSetupType] = useState(null); // 'authenticator' or 'question'
+  const [setupType, setSetupType] = useState(null); 
   
   const [securityQuestion, setSecurityQuestion] = useState('');
   const [securityAnswer, setSecurityAnswer] = useState('');
@@ -229,7 +229,7 @@ const Settings = () => {
           </AnimatePresence>
         </motion.div>
 
-        {/* Global Protection Note */}
+        {}
         <motion.div whileHover={{ translateY: -5 }} className="glass-card" style={{ padding: '40px', gridColumn: '1 / -1', borderLeft: '6px solid var(--primary)' }}>
           <div className="flex align-center gap-15 mb-15">
             <AlertCircle size={24} color="var(--primary)" />

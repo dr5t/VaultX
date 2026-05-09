@@ -41,7 +41,7 @@ h1, h2, h3, h4 {
   padding: 40px;
 }
 
-/* Premium Glass Card */
+
 .glass-card {
   background: var(--bg-card);
   -webkit-backdrop-filter: blur(20px);
@@ -58,7 +58,7 @@ h1, h2, h3, h4 {
   box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.1);
 }
 
-/* Interactive Components */
+
 .btn {
   display: inline-flex;
   align-items: center;
@@ -117,7 +117,7 @@ input:focus {
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-/* Animated Utilities */
+
 .flex { display: flex; }
 .align-center { align-items: center; }
 .justify-between { justify-content: space-between; }
@@ -132,7 +132,7 @@ input:focus {
   color: transparent;
 }
 
-/* Custom Scrollbar */
+
 ::-webkit-scrollbar {
   width: 8px;
 }

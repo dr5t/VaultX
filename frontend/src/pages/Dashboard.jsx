@@ -35,7 +35,7 @@ const Dashboard = () => {
         </Link>
       </header>
 
-      {/* Stats Grid */}
+      {}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', marginBottom: '50px' }}>
         {stats.map((stat, i) => (
           <motion.div 
@@ -112,7 +112,7 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
-        {/* Security Summary */}
+        {}
         <motion.div 
           initial={{ opacity: 0, x: 30 }}
           animate={{ opacity: 1, x: 0 }}

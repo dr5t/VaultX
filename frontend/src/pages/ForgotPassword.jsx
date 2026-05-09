@@ -14,7 +14,7 @@ const ForgotPassword = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      // We'll create this endpoint in the backend
+      
       await axios.post('http://localhost:5000/api/auth/forgot-password', { email });
       setSent(true);
       toast.success('Reset link sent to your email!');

@@ -106,7 +106,7 @@ const Register = () => {
             </div>
           </div>
 
-          {/* Strength Meter */}
+          {}
           <div className="flex gap-5" style={{ marginBottom: '25px', height: '4px' }}>
             {[0, 1, 2, 3].map(i => (
               <div key={i} style={{ flex: 1, borderRadius: '10px', background: i < strength ? strengthColors[strength - 1] : 'var(--glass)', transition: 'all 0.3s' }} />

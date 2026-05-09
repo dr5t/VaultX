@@ -1,14 +1,9 @@
-/**
- * Secure crypto utilities for client-side zero-knowledge encryption.
- * Uses Web Crypto API for AES-256-GCM.
- */
+
 
 const ITERATIONS = 100000;
-const SALT = 'vaultx-client-salt-fixed'; // In a real app, this should be unique per user or stored
+const SALT = 'vaultx-client-salt-fixed'; 
 
-/**
- * Derive an AES-256 key from a master password using PBKDF2
- */
+
 export async function deriveKey(masterPassword) {
   const encoder = new TextEncoder();
   const passwordKey = await window.crypto.subtle.importKey(
@@ -33,9 +28,7 @@ export async function deriveKey(masterPassword) {
   );
 }
 
-/**
- * Encrypt a plaintext string using an AES-GCM key
- */
+
 export async function encryptData(plaintext, key) {
   const encoder = new TextEncoder();
   const iv = window.crypto.getRandomValues(new Uint8Array(12));
@@ -55,9 +48,7 @@ export async function encryptData(plaintext, key) {
   return btoa(String.fromCharCode(...result));
 }
 
-/**
- * Decrypt a base64 encoded ciphertext using an AES-GCM key
- */
+
 export async function decryptData(ciphertextBase64, key) {
   const binary = atob(ciphertextBase64);
   const data = new Uint8Array(binary.length);

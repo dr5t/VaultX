@@ -174,7 +174,7 @@ const Vault = () => {
         </table>
       </div>
 
-      {/* Modal */}
+      {}
       <AnimatePresence>
         {isModalOpen && (
           <motion.div 
