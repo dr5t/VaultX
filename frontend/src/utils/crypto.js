@@ -68,3 +68,28 @@ export async function decryptData(ciphertextBase64, key) {
   const decoder = new TextDecoder();
   return decoder.decode(decrypted);
 }
+
+export async function hashPassword(email, masterPassword) {
+  const encoder = new TextEncoder();
+  const passwordKey = await window.crypto.subtle.importKey(
+    'raw',
+    encoder.encode(masterPassword),
+    { name: 'PBKDF2' },
+    false,
+    ['deriveBits']
+  );
+
+  const salt = encoder.encode(email.toLowerCase() + 'vaultx-login-salt');
+  const derivedBits = await window.crypto.subtle.deriveBits(
+    {
+      name: 'PBKDF2',
+      salt: salt,
+      iterations: 100000,
+      hash: 'SHA-256',
+    },
+    passwordKey,
+    256
+  );
+
+  return btoa(String.fromCharCode(...new Uint8Array(derivedBits)));
+}

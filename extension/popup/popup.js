@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    const response = await fetch(`http://localhost:5000/api/credentials/by-url?url=${encodeURIComponent(tab.url)}`, {
+    const response = await fetch(`http://localhost:5001/api/credentials/by-url?url=${encodeURIComponent(tab.url)}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

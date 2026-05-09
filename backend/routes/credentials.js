@@ -43,6 +43,36 @@ router.get('/', async (req, res) => {
   }
 });
 
+router.get('/by-url', async (req, res) => {
+  try {
+    const { url } = req.query;
+    if (!url) return res.status(400).json({ success: false, message: 'URL required' });
+
+    let domain = url;
+    try {
+      domain = new URL(url).hostname;
+    } catch (e) {
+      // Not a valid URL, use as is
+    }
+
+    const rows = await query(
+      'SELECT * FROM credentials WHERE userId = ? AND (url LIKE ? OR siteName LIKE ?)',
+      [req.user.email, `%${domain}%`, `%${domain}%`]
+    );
+
+    const credentials = rows.map(row => ({
+      _id: row.id,
+      ...row,
+      password: decrypt(row.encryptedPassword, req.user.email)
+    }));
+
+    res.json({ success: true, credentials });
+  } catch (err) {
+    console.error('Fetch by URL Error:', err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 router.post('/', async (req, res) => {
   try {
     const { siteName, url, username, password, category, notes } = req.body;

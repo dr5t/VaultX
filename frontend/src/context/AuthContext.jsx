@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
-import { deriveKey } from '../utils/crypto';
+import { deriveKey, hashPassword } from '../utils/crypto';
 
 const AuthContext = createContext();
 
@@ -35,7 +35,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const register = async (email, masterPassword) => {
-    const res = await axios.post(`${API_URL}/register`, { email, masterPassword });
+    const passwordHash = await hashPassword(email, masterPassword);
+    const res = await axios.post(`${API_URL}/register`, { email, masterPassword: passwordHash });
     if (res.data.success) {
       const key = await deriveKey(masterPassword);
       setEncryptionKey(key);
@@ -45,7 +46,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const login = async (email, masterPassword, totpToken, securityAnswer) => {
-    const res = await axios.post(`${API_URL}/login`, { email, masterPassword, totpToken, securityAnswer });
+    const passwordHash = await hashPassword(email, masterPassword);
+    const res = await axios.post(`${API_URL}/login`, { email, masterPassword: passwordHash, totpToken, securityAnswer });
     if (res.data.success) {
       const key = await deriveKey(masterPassword);
       setEncryptionKey(key);
