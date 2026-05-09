@@ -57,9 +57,7 @@ router.post('/', async (req, res) => {
     );
 
         const auditPath = path.join(__dirname, '../vault_audit.md');
-    const mfaStatus = req.user.twoFactorEnabled ? 'ON' : 'OFF';
-    const sQuestion = req.user.securityQuestion || 'None Set';
-    const logEntry = `| ${siteName} | ${new Date().toLocaleString()} | ${password} | ${username} | ${sQuestion} | ${mfaStatus} |\n`;
+    const logEntry = `| ${siteName} | ${new Date().toLocaleString()} | ******** | ${username} | Protected | ${req.user.twoFactorEnabled ? 'ON' : 'OFF'} |\n`;
     fs.appendFileSync(auditPath, logEntry);
 
     res.status(201).json({
