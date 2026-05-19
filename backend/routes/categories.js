@@ -1,17 +1,22 @@
 const express = require('express');
 const { protect } = require('../middleware/auth');
-const { query, run, get } = require('../db/database');
+const { db } = require('../db/database');
 
 const router = express.Router();
 router.use(protect);
 
 router.get('/', async (req, res) => {
   try {
-    const categories = await query('SELECT * FROM categories WHERE userId = ?', [req.user.email]);
-    res.json({ 
-      success: true, 
-      categories: categories.map(c => ({ _id: c.id, ...c }))
+    const snapshot = await db.collection('categories')
+      .where('userId', '==', req.user.email)
+      .get();
+    
+    const categories = [];
+    snapshot.forEach(doc => {
+      categories.push({ _id: doc.id, id: doc.id, ...doc.data() });
     });
+
+    res.json({ success: true, categories });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -22,14 +27,19 @@ router.post('/', async (req, res) => {
     const { name, icon, color } = req.body;
     if (!name) return res.status(400).json({ success: false, message: 'Category name required' });
 
-    const result = await run(
-      'INSERT INTO categories (userId, name, icon, color) VALUES (?, ?, ?, ?)',
-      [req.user.email, name, icon || '🔐', color || '#6366f1']
-    );
+    const newCat = {
+      userId: req.user.email,
+      name,
+      icon: icon || '🔐',
+      color: color || '#6366f1',
+      createdAt: new Date().toISOString()
+    };
+
+    const docRef = await db.collection('categories').add(newCat);
 
     res.status(201).json({ 
       success: true, 
-      category: { _id: result.id, name, icon, color } 
+      category: { _id: docRef.id, id: docRef.id, ...newCat } 
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -38,12 +48,14 @@ router.post('/', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    const cat = await get('SELECT userId FROM categories WHERE id = ?', [req.params.id]);
-    if (!cat || cat.userId !== req.user.email) {
+    const docRef = db.collection('categories').doc(req.params.id);
+    const doc = await docRef.get();
+
+    if (!doc.exists || doc.data().userId !== req.user.email) {
       return res.status(404).json({ success: false, message: 'Category not found' });
     }
 
-    await run('DELETE FROM categories WHERE id = ?', [req.params.id]);
+    await docRef.delete();
     res.json({ success: true, message: 'Category deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
