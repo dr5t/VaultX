@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const speakeasy = require('speakeasy');
 const QRCode = require('qrcode');
 const crypto = require('crypto');
-const { get, run } = require('../db/database');
+const { db } = require('../db/database');
 const { protect } = require('../middleware/auth');
 
 const router = express.Router();
@@ -27,22 +27,26 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ success: false, message: 'Email and master password required' });
     }
 
-    const existingUser = await get('SELECT email FROM users WHERE email = ?', [email.toLowerCase()]);
-    if (existingUser) {
+    const emailKey = email.toLowerCase();
+    const userRef = db.collection('users').doc(emailKey);
+    const doc = await userRef.get();
+    
+    if (doc.exists) {
       return res.status(409).json({ success: false, message: 'Email already registered' });
     }
 
     const masterPasswordHash = hashPassword(masterPassword);
     
-    await run(
-      'INSERT INTO users (email, masterPasswordHash) VALUES (?, ?)',
-      [email.toLowerCase(), masterPasswordHash]
-    );
+    const accessToken = jwt.sign({ id: emailKey }, process.env.JWT_SECRET, { expiresIn: '15m' });
+    const refreshToken = jwt.sign({ id: emailKey }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
-    const accessToken = jwt.sign({ id: email.toLowerCase() }, process.env.JWT_SECRET, { expiresIn: '15m' });
-    const refreshToken = jwt.sign({ id: email.toLowerCase() }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
-
-    await run('UPDATE users SET refreshToken = ? WHERE email = ?', [refreshToken, email.toLowerCase()]);
+    await userRef.set({
+      email: emailKey,
+      masterPasswordHash,
+      refreshToken,
+      twoFactorEnabled: 0,
+      createdAt: new Date().toISOString()
+    });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -52,7 +56,7 @@ router.post('/register', async (req, res) => {
     }).status(201).json({
       success: true,
       accessToken,
-      user: { id: email.toLowerCase(), email: email.toLowerCase(), twoFactorEnabled: false }
+      user: { id: emailKey, email: emailKey, twoFactorEnabled: false }
     });
   } catch (err) {
     console.error('Registration Error:', err);
@@ -63,9 +67,18 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, masterPassword, totpToken, securityAnswer } = req.body;
-    const user = await get('SELECT * FROM users WHERE email = ?', [email.toLowerCase()]);
+    const emailKey = email.toLowerCase();
+    
+    const userRef = db.collection('users').doc(emailKey);
+    const doc = await userRef.get();
 
-    if (!user || !verifyPassword(masterPassword, user.masterPasswordHash)) {
+    if (!doc.exists) {
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    }
+    
+    const user = doc.data();
+
+    if (!verifyPassword(masterPassword, user.masterPasswordHash)) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
 
@@ -114,7 +127,7 @@ router.post('/login', async (req, res) => {
     const accessToken = jwt.sign({ id: user.email }, process.env.JWT_SECRET, { expiresIn: '15m' });
     const refreshToken = jwt.sign({ id: user.email }, process.env.JWT_REFRESH_SECRET, { expiresIn: '7d' });
 
-    await run('UPDATE users SET refreshToken = ? WHERE email = ?', [refreshToken, user.email]);
+    await userRef.update({ refreshToken });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
@@ -166,10 +179,11 @@ router.post('/2fa/verify', protect, async (req, res) => {
     console.log(`🔍 TOTP Verification: Token=${token}, Valid=${valid}`);
 
     if (valid) {
-      await run(
-        'UPDATE users SET twoFactorEnabled = 1, twoFactorSecret = ?, twoFactorType = "authenticator" WHERE email = ?',
-        [secret || req.user.twoFactorSecret, req.user.email]
-      );
+      await db.collection('users').doc(req.user.email).update({
+        twoFactorEnabled: 1,
+        twoFactorSecret: secret || req.user.twoFactorSecret,
+        twoFactorType: 'authenticator'
+      });
       res.json({ success: true, message: '2FA enabled' });
     } else {
       res.status(400).json({ success: false, message: 'Invalid token' });
@@ -184,10 +198,12 @@ router.post('/2fa/security-questions/setup', protect, async (req, res) => {
   try {
     const { question, answer } = req.body;
     const answerHash = hashPassword(answer.toLowerCase().trim());
-    await run(
-      'UPDATE users SET twoFactorEnabled = 1, twoFactorType = "security_question", securityQuestion = ?, securityAnswerHash = ? WHERE email = ?',
-      [question, answerHash, req.user.email]
-    );
+    await db.collection('users').doc(req.user.email).update({
+      twoFactorEnabled: 1,
+      twoFactorType: 'security_question',
+      securityQuestion: question,
+      securityAnswerHash: answerHash
+    });
     res.json({ success: true, message: 'Security question set' });
   } catch (err) {
     console.error('❌ Security Question Setup Error:', err);
@@ -201,10 +217,17 @@ router.post('/2fa/disable', protect, async (req, res) => {
     if (!verifyPassword(masterPassword, req.user.masterPasswordHash)) {
       return res.status(401).json({ success: false, message: 'Invalid master password' });
     }
-    await run(
-      'UPDATE users SET twoFactorEnabled = 0, twoFactorSecret = NULL, securityAnswerHash = NULL WHERE email = ?',
-      [req.user.email]
-    );
+    
+    const updateData = {
+      twoFactorEnabled: 0
+    };
+    
+    // In Firestore, we use FieldValue.delete() to remove fields, 
+    // but setting them to null works too and matches previous SQLite logic
+    updateData.twoFactorSecret = null;
+    updateData.securityAnswerHash = null;
+
+    await db.collection('users').doc(req.user.email).update(updateData);
     res.json({ success: true, message: '2FA disabled' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

@@ -1,7 +1,7 @@
 const express = require('express');
 const { protect } = require('../middleware/auth');
 const { encrypt, decrypt } = require('../utils/encryption');
-const { get, run, query } = require('../db/database');
+const { db } = require('../db/database');
 const fs = require('fs');
 const path = require('path');
 
@@ -11,23 +11,34 @@ router.use(protect);
 router.get('/', async (req, res) => {
   try {
     const { category } = req.query;
-    let sql = 'SELECT * FROM credentials WHERE userId = ?';
-    let params = [req.user.email];
-
-    if (category && category !== 'all') {
-      sql += ' AND category = ?';
-      params.push(category);
-    }
-
-    const rows = await query(sql, params);
     
-    const credentials = rows.map(row => ({
-      _id: row.id,
-      ...row,
-      password: decrypt(row.encryptedPassword, req.user.email)
-    }));
+    let query = db.collection('credentials').where('userId', '==', req.user.email);
+    if (category && category !== 'all') {
+      query = query.where('category', '==', category);
+    }
+    
+    const snapshot = await query.get();
+    const rows = [];
+    snapshot.forEach(doc => {
+      rows.push({ id: doc.id, ...doc.data() });
+    });
+    
+    const credentials = rows.map(row => {
+      let decodedPassword = row.encryptedPassword;
+      try {
+        decodedPassword = decrypt(row.encryptedPassword, req.user.email);
+      } catch (e) {
+        // If it's zero-knowledge encrypted on client, decrypt on backend will fail.
+        // We just return the encrypted blob or raw string.
+      }
+      return {
+        _id: row.id,
+        ...row,
+        password: decodedPassword
+      };
+    });
 
-        const usernameMap = {};
+    const usernameMap = {};
     credentials.forEach(c => {
       if (!usernameMap[c.username]) usernameMap[c.username] = [];
       usernameMap[c.username].push(c.siteName);
@@ -51,20 +62,32 @@ router.get('/by-url', async (req, res) => {
     let domain = url;
     try {
       domain = new URL(url).hostname;
-    } catch (e) {
-      // Not a valid URL, use as is
-    }
+    } catch (e) {}
 
-    const rows = await query(
-      'SELECT * FROM credentials WHERE userId = ? AND (url LIKE ? OR siteName LIKE ?)',
-      [req.user.email, `%${domain}%`, `%${domain}%`]
-    );
+    // Firestore doesn't support LIKE '%domain%'. Fetch all and filter.
+    const snapshot = await db.collection('credentials')
+      .where('userId', '==', req.user.email)
+      .get();
+      
+    const rows = [];
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if ((data.url && data.url.includes(domain)) || (data.siteName && data.siteName.includes(domain))) {
+        rows.push({ id: doc.id, ...data });
+      }
+    });
 
-    const credentials = rows.map(row => ({
-      _id: row.id,
-      ...row,
-      password: decrypt(row.encryptedPassword, req.user.email)
-    }));
+    const credentials = rows.map(row => {
+      let decodedPassword = row.encryptedPassword;
+      try {
+        decodedPassword = decrypt(row.encryptedPassword, req.user.email);
+      } catch (e) {}
+      return {
+        _id: row.id,
+        ...row,
+        password: decodedPassword
+      };
+    });
 
     res.json({ success: true, credentials });
   } catch (err) {
@@ -76,24 +99,32 @@ router.get('/by-url', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const { siteName, url, username, password, category, notes } = req.body;
-    console.log('👉 Storing encrypted blob for user:', req.user?.email);
     
+    // Store encrypted password as provided, per recent Zero-Knowledge updates
     const encryptedPassword = password;
     
-    const result = await run(
-      `INSERT INTO credentials (userId, siteName, url, username, encryptedPassword, category, notes) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [req.user.email, siteName, url || '', username, encryptedPassword, category || 'other', notes || '']
-    );
+    const newCred = {
+      userId: req.user.email,
+      siteName,
+      url: url || '',
+      username,
+      encryptedPassword,
+      category: category || 'other',
+      notes: notes || '',
+      createdAt: new Date().toISOString(),
+      lastAccessed: new Date().toISOString()
+    };
+    
+    const docRef = await db.collection('credentials').add(newCred);
 
-        const auditPath = path.join(__dirname, '../vault_audit.md');
+    const auditPath = path.join(__dirname, '../vault_audit.md');
     const logEntry = `| ${siteName} | ${new Date().toLocaleString()} | ******** | ${username} | Protected | ${req.user.twoFactorEnabled ? 'ON' : 'OFF'} |\n`;
     fs.appendFileSync(auditPath, logEntry);
 
     res.status(201).json({
       success: true,
       credential: {
-        _id: result.id,
+        _id: docRef.id,
         siteName,
         url,
         username,
@@ -113,11 +144,22 @@ router.put('/:id', async (req, res) => {
     const { siteName, url, username, password, category, notes } = req.body;
     const encryptedPassword = password;
 
-    await run(
-      `UPDATE credentials SET siteName = ?, url = ?, username = ?, encryptedPassword = ?, category = ?, notes = ?, lastAccessed = CURRENT_TIMESTAMP 
-       WHERE id = ? AND userId = ?`,
-      [siteName, url, username, encryptedPassword, category, notes, req.params.id, req.user.email]
-    );
+    const docRef = db.collection('credentials').doc(req.params.id);
+    const doc = await docRef.get();
+    
+    if (!doc.exists || doc.data().userId !== req.user.email) {
+      return res.status(404).json({ success: false, message: 'Credential not found' });
+    }
+
+    await docRef.update({
+      siteName,
+      url,
+      username,
+      encryptedPassword,
+      category,
+      notes,
+      lastAccessed: new Date().toISOString()
+    });
 
     res.json({
       success: true,
@@ -130,7 +172,14 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
   try {
-    await run('DELETE FROM credentials WHERE id = ? AND userId = ?', [req.params.id, req.user.email]);
+    const docRef = db.collection('credentials').doc(req.params.id);
+    const doc = await docRef.get();
+    
+    if (!doc.exists || doc.data().userId !== req.user.email) {
+      return res.status(404).json({ success: false, message: 'Credential not found' });
+    }
+
+    await docRef.delete();
     res.json({ success: true, message: 'Credential deleted' });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
