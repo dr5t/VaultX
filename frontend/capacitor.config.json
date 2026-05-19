@@ -1,0 +1,6 @@
+{
+  "appId": "com.vaultx.app",
+  "appName": "VaultX",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}
