@@ -17,9 +17,10 @@ yarn-error.log
 *.db3
 vaultx.sqlite
 
-# Firebase Credentials
+# Firebase Credentials & cache
 firebase-config.json
 firebase-adminsdk-*.json
+.firebase/
 
 # OS files
 .DS_Store
