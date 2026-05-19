@@ -1,81 +1,22 @@
-const sqlite3 = require('sqlite3').verbose();
+const admin = require('firebase-admin');
 const path = require('path');
+const fs = require('fs');
 
-const dbPath = path.join(__dirname, '../vaultx.sqlite');
-const db = new sqlite3.Database(dbPath, (err) => {
-  if (err) {
-    console.error('Error connecting to SQLite:', err.message);
-  } else {
-    console.log('✅ Connected to Local SQLite database');
-    initializeTables();
-  }
-});
+const serviceAccountPath = path.join(__dirname, '../firebase-config.json');
 
-function initializeTables() {
-  db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS users (
-      email TEXT PRIMARY KEY,
-      masterPasswordHash TEXT NOT NULL,
-      refreshToken TEXT,
-      twoFactorEnabled INTEGER DEFAULT 0,
-      twoFactorSecret TEXT,
-      twoFactorType TEXT,
-      securityQuestion TEXT,
-      securityAnswerHash TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS credentials (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      userId TEXT NOT NULL,
-      siteName TEXT NOT NULL,
-      url TEXT,
-      username TEXT NOT NULL,
-      encryptedPassword TEXT NOT NULL,
-      category TEXT DEFAULT 'other',
-      notes TEXT,
-      lastAccessed DATETIME DEFAULT CURRENT_TIMESTAMP,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (userId) REFERENCES users (email)
-    )`);
-
-    db.run(`CREATE TABLE IF NOT EXISTS categories (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      userId TEXT NOT NULL,
-      name TEXT NOT NULL,
-      icon TEXT,
-      color TEXT,
-      createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (userId) REFERENCES users (email)
-    )`);
+if (fs.existsSync(serviceAccountPath)) {
+  const serviceAccount = require(serviceAccountPath);
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
   });
+  console.log('✅ Connected to Firebase Firestore');
+} else {
+  console.warn('⚠️  WARNING: firebase-config.json not found in backend/ directory.');
+  console.warn('Firebase Admin SDK is running without credentials (may fail).');
+  // Initialize without credentials (works in Firebase Functions environment)
+  admin.initializeApp();
 }
 
-const query = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.all(sql, params, (err, rows) => {
-      if (err) reject(err);
-      else resolve(rows);
-    });
-  });
-};
+const db = admin.firestore();
 
-const run = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.run(sql, params, function(err) {
-      if (err) reject(err);
-      else resolve({ id: this.lastID, changes: this.changes });
-    });
-  });
-};
-
-const get = (sql, params = []) => {
-  return new Promise((resolve, reject) => {
-    db.get(sql, params, (err, row) => {
-      if (err) reject(err);
-      else resolve(row);
-    });
-  });
-};
-
-module.exports = { db, query, run, get };
+module.exports = { db };
