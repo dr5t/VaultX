@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const { get } = require('../db/database');
+const { db } = require('../db/database');
 
 const protect = async (req, res, next) => {
   try {
@@ -11,12 +11,13 @@ const protect = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await get('SELECT * FROM users WHERE email = ?', [decoded.id]);
+    const userDoc = await db.collection('users').doc(decoded.id).get();
     
-    if (!user) {
+    if (!userDoc.exists) {
       return res.status(401).json({ success: false, message: 'User not found' });
     }
 
+    const user = userDoc.data();
     req.user = user;
     req.user.id = user.email;
     next();
