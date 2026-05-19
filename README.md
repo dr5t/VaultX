@@ -10,9 +10,22 @@ A full-stack, secure password manager with a React dashboard and Chrome Extensio
 - **Audit System**: Real-time detection of duplicate usernames and password age alerts.
 - **Premium Design**: Modern dark-mode interface with glassmorphism and smooth micro-interactions.
 
-## 🛠️ Setup Instructions
+## 🛠️ Tech Stack & Architecture
+- **Frontend**: React.js & Vite
+- **Backend**: Node.js & Express
+- **Database**: Firebase Firestore (Migrated from SQLite)
+- **Hosting**: Firebase Hosting (Frontend)
 
-### 1. Backend API (Node.js & Firebase)
+## 📦 Setup Instructions
+
+### 1. Firebase Configuration
+This project relies on Firebase for its database. You will need to create a Firebase project and obtain the Service Account credentials.
+1. Go to [Firebase Console](https://console.firebase.google.com/) and create a new project.
+2. Navigate to **Project Settings > Service Accounts**.
+3. Click **Generate new private key** and download the JSON file.
+4. Rename the downloaded file to `firebase-config.json` and place it in the `backend/` directory. (This file is ignored by `.gitignore` and should never be committed).
+
+### 2. Backend API
 1. Navigate to the backend directory:
    ```bash
    cd backend
@@ -21,22 +34,18 @@ A full-stack, secure password manager with a React dashboard and Chrome Extensio
    ```bash
    npm install
    ```
-3. Setup Firebase:
-   - Go to Firebase Console > Project Settings > Service Accounts.
-   - Click "Generate new private key" and download the JSON.
-   - Rename it to `firebase-config.json` and place it in the `backend/` folder.
-4. Setup your environment variables:
+3. Setup your environment variables:
    ```bash
    cp .env.example .env
    ```
-   *Edit `.env` and provide your JWT secrets.*
+   *Edit `.env` and provide your JWT secrets and other configurations.*
 4. Start the development server:
    ```bash
    npm run dev
    ```
-   *The API will be live at `http://localhost:5000`.*
+   *The API will be live at `http://localhost:5000` (or the port specified in your .env).*
 
-### 2. Frontend Dashboard (React & Vite)
+### 3. Frontend Dashboard
 1. Navigate to the frontend directory:
    ```bash
    cd frontend
@@ -49,19 +58,18 @@ A full-stack, secure password manager with a React dashboard and Chrome Extensio
    ```bash
    npm run dev
    ```
-   *The dashboard will be available at `http://localhost:3000` (or `http://localhost:5173`). Check your console for the exact port.*
 
-### 3. Chrome Extension
+### 4. Chrome Extension
 1. Open Chrome and go to `chrome://extensions/`.
 2. Turn on **Developer mode** in the top right corner.
 3. Click **Load unpacked** and select the `extension` folder from the project directory.
 4. **Usage**: Log in to the VaultX web dashboard. The extension will automatically sync your session to allow for secure autofilling on external sites.
 
-## 🛡️ Security Architecture
-- **Password Hashing**: Bcrypt (cost factor 12) for master passwords.
+## 🛡️ Security
+- **Never commit your `.env` or `firebase-config.json` files.**
+- **Password Hashing**: Bcrypt for master passwords.
 - **Encryption**: AES-256-GCM for stored credentials.
 - **Auth**: JWT (JSON Web Tokens) with refresh token rotation.
-- **Transport**: Designed for HTTPS with secure cookie handling.
 
 ## 📄 License
-Educational use only. Ensure all environment secrets are rotated before any production deployment.
+This project is open-source. Educational use is encouraged. Ensure all environment secrets are rotated before any production deployment.
